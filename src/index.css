@@ -1,0 +1,159 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================
+   THÈME : Océan (défaut)
+   Bleu professionnel, épuré
+============================================ */
+:root {
+  --color-primary:      37 99 235;    /* #2563EB */
+  --color-primary-dark: 29 78 216;    /* #1D4ED8 */
+  --color-bg:           248 250 252;  /* #F8FAFC */
+  --color-surface:      255 255 255;
+  --color-text:         17 24 39;     /* gray-900 */
+  --color-text-muted:   107 114 128;  /* gray-500 */
+  --color-border:       229 231 235;  /* gray-200 */
+  --hero-from:          #1d4ed8;
+  --hero-to:            #2563eb;
+  --hero-accent:        #93c5fd;      /* blue-300 */
+}
+
+/* ============================================
+   THÈME : Minuit Doré
+   Fond sombre, accents or — Luxe & Premium
+============================================ */
+[data-theme="minuit"] {
+  --color-primary:      212 175 55;   /* #D4AF37 gold */
+  --color-primary-dark: 180 145 30;
+  --color-bg:           15 14 23;     /* #0F0E17 */
+  --color-surface:      30 28 46;     /* #1E1C2E */
+  --color-text:         255 254 254;
+  --color-text-muted:   156 163 175;  /* gray-400 */
+  --color-border:       55 53 80;
+  --hero-from:          #0F0E17;
+  --hero-to:            #2D1B69;
+  --hero-accent:        #D4AF37;
+}
+
+/* ============================================
+   THÈME : Forêt
+   Vert nature, fond crème — Bio & Naturel
+============================================ */
+[data-theme="foret"] {
+  --color-primary:      22 163 74;    /* #16A34A */
+  --color-primary-dark: 15 118 55;   /* #0F7637 */
+  --color-bg:           240 253 244;  /* #F0FDF4 */
+  --color-surface:      255 255 255;
+  --color-text:         20 83 45;     /* green-900 */
+  --color-text-muted:   100 116 139;
+  --color-border:       187 247 208;  /* green-200 */
+  --hero-from:          #14532d;
+  --hero-to:            #16a34a;
+  --hero-accent:        #bbf7d0;      /* green-200 */
+}
+
+/* ============================================
+   THÈME : Feu
+   Fond noir, rouge vif — Bold & Urbain
+============================================ */
+[data-theme="feu"] {
+  --color-primary:      239 68 68;    /* #EF4444 */
+  --color-primary-dark: 220 38 38;   /* #DC2626 */
+  --color-bg:           9 9 11;       /* #09090B */
+  --color-surface:      24 24 27;     /* #18181B */
+  --color-text:         250 250 250;
+  --color-text-muted:   161 161 170;  /* zinc-400 */
+  --color-border:       63 63 70;     /* zinc-700 */
+  --hero-from:          #09090B;
+  --hero-to:            #3f0f0f;
+  --hero-accent:        #f97316;      /* orange-500 */
+}
+
+/* ============================================
+   OVERRIDES POUR THÈMES SOMBRES (minuit + feu)
+   Appliqués uniquement sur la boutique publique
+   (ThemeProvider monte data-theme sur body
+    uniquement pour les routes boutique)
+============================================ */
+[data-theme="minuit"] body,
+[data-theme="feu"] body {
+  background-color: rgb(var(--color-bg));
+  color: rgb(var(--color-text));
+}
+
+[data-theme="minuit"] .bg-white,
+[data-theme="feu"] .bg-white {
+  background-color: rgb(var(--color-surface)) !important;
+}
+
+[data-theme="minuit"] .bg-gray-50,
+[data-theme="feu"] .bg-gray-50 {
+  background-color: rgb(var(--color-bg)) !important;
+}
+
+[data-theme="minuit"] .bg-gray-100,
+[data-theme="feu"] .bg-gray-100 {
+  background-color: rgb(var(--color-surface)) !important;
+}
+
+[data-theme="minuit"] .text-gray-900,
+[data-theme="feu"] .text-gray-900 {
+  color: rgb(var(--color-text)) !important;
+}
+
+[data-theme="minuit"] .text-gray-800,
+[data-theme="feu"] .text-gray-800 {
+  color: rgb(var(--color-text)) !important;
+}
+
+[data-theme="minuit"] .text-gray-700,
+[data-theme="feu"] .text-gray-700 {
+  color: rgb(var(--color-text-muted)) !important;
+}
+
+[data-theme="minuit"] .text-gray-600,
+[data-theme="feu"] .text-gray-600 {
+  color: rgb(var(--color-text-muted)) !important;
+}
+
+[data-theme="minuit"] .text-gray-500,
+[data-theme="feu"] .text-gray-500 {
+  color: rgb(var(--color-text-muted)) !important;
+}
+
+[data-theme="minuit"] .border-gray-200,
+[data-theme="feu"] .border-gray-200 {
+  border-color: rgb(var(--color-border)) !important;
+}
+
+[data-theme="minuit"] .border-gray-100,
+[data-theme="feu"] .border-gray-100 {
+  border-color: rgb(var(--color-border)) !important;
+}
+
+[data-theme="minuit"] input,
+[data-theme="minuit"] textarea,
+[data-theme="minuit"] select,
+[data-theme="feu"] input,
+[data-theme="feu"] textarea,
+[data-theme="feu"] select {
+  background-color: rgb(var(--color-bg)) !important;
+  color: rgb(var(--color-text)) !important;
+  border-color: rgb(var(--color-border)) !important;
+}
+
+/* Correction thème Forêt - textes */
+[data-theme="foret"] .text-gray-900 { color: rgb(var(--color-text)) !important; }
+[data-theme="foret"] .border-gray-200 { border-color: rgb(var(--color-border)) !important; }
+
+/* Animation du hero (déclarée ici pour être accessible via style inline) */
+@keyframes gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50%       { background-position: 100% 50%; }
+}
+
+@keyframes fadeUp {
+  0%   { opacity: 0; transform: translateY(30px); }
+  100% { opacity: 1; transform: translateY(0); }
+}

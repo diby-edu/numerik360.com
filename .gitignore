@@ -1,0 +1,10 @@
+# Environnement — NE JAMAIS COMMIT
+.env
+.env.local
+.env.production
+
+# Node
+node_modules/
+
+# Build
+dist/
