@@ -6,6 +6,11 @@ function formatPrice(amount) {
   return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF', maximumFractionDigits: 0 }).format(amount)
 }
 
+function isNew(createdAt) {
+  const days = (Date.now() - new Date(createdAt).getTime()) / (1000 * 60 * 60 * 24)
+  return days <= 30
+}
+
 export default function ProductCard({ product }) {
   const addItem = useCartStore(s => s.addItem)
 
@@ -13,15 +18,45 @@ export default function ProductCard({ product }) {
     ? supabase.storage.from('products').getPublicUrl(product.images[0]).data.publicUrl
     : null
 
+  const hasPromo = product.promo_price && product.promo_price < product.price
+  const outOfStock = product.stock === 0
+  const showNew = !hasPromo && !outOfStock && isNew(product.created_at)
+
+  const displayPrice = hasPromo ? product.promo_price : product.price
+  const discount = hasPromo
+    ? Math.round((1 - product.promo_price / product.price) * 100)
+    : 0
+
   return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md transition-shadow group">
-      <Link to={`/produit/${product.slug}`}>
+    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300 group relative flex flex-col">
+
+      {/* Badges */}
+      <div className="absolute top-2 left-2 z-10 flex flex-col gap-1">
+        {outOfStock && (
+          <span className="bg-gray-700 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+            Rupture
+          </span>
+        )}
+        {hasPromo && !outOfStock && (
+          <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+            -{discount}%
+          </span>
+        )}
+        {showNew && (
+          <span className="bg-green-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+            Nouveau
+          </span>
+        )}
+      </div>
+
+      {/* Image */}
+      <Link to={`/produit/${product.slug}`} className="block">
         <div className="aspect-square bg-gray-100 overflow-hidden">
           {imageUrl ? (
             <img
               src={imageUrl}
               alt={product.name}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ${outOfStock ? 'opacity-60' : ''}`}
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-gray-300">
@@ -32,17 +67,39 @@ export default function ProductCard({ product }) {
           )}
         </div>
       </Link>
-      <div className="p-4">
+
+      {/* Infos */}
+      <div className="p-4 flex flex-col flex-1">
         <Link to={`/produit/${product.slug}`}>
-          <h3 className="font-semibold text-gray-900 text-sm mb-1 hover:text-primary transition-colors line-clamp-2">{product.name}</h3>
+          <h3 className="font-semibold text-gray-900 text-sm mb-2 hover:text-primary transition-colors line-clamp-2 leading-snug">
+            {product.name}
+          </h3>
         </Link>
-        <p className="text-primary font-bold mb-3">{formatPrice(product.price)}</p>
+
+        {/* Prix */}
+        <div className="flex items-baseline gap-2 mb-3">
+          <span className="text-primary font-bold text-base">{formatPrice(displayPrice)}</span>
+          {hasPromo && (
+            <span className="text-gray-400 text-sm line-through">{formatPrice(product.price)}</span>
+          )}
+        </div>
+
+        {/* Bouton */}
         <button
           onClick={() => addItem(product, 1)}
-          disabled={product.stock === 0}
-          className="w-full bg-primary text-white py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={outOfStock}
+          className="mt-auto w-full bg-primary text-white py-2 rounded-lg text-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
-          {product.stock === 0 ? 'Rupture de stock' : 'Ajouter au panier'}
+          {outOfStock ? (
+            'Rupture de stock'
+          ) : (
+            <>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              Ajouter au panier
+            </>
+          )}
         </button>
       </div>
     </div>

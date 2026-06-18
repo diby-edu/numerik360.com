@@ -14,6 +14,8 @@ import CheckoutPage from './pages/shop/CheckoutPage'
 import OrderSuccessPage from './pages/shop/OrderSuccessPage'
 import LoginPage from './pages/shop/LoginPage'
 import RegisterPage from './pages/shop/RegisterPage'
+import AboutPage from './pages/shop/AboutPage'
+import ContactPage from './pages/shop/ContactPage'
 
 // Espace client
 import AccountLayout from './pages/shop/account/AccountLayout'
@@ -65,6 +67,8 @@ export default function App() {
           {/* Auth client */}
           <Route path="/connexion" element={<LoginPage />} />
           <Route path="/inscription" element={<RegisterPage />} />
+          <Route path="/a-propos" element={<AboutPage />} />
+          <Route path="/contact" element={<ContactPage />} />
 
           {/* Espace client */}
           <Route path="/mon-compte" element={<AccountLayout />}>

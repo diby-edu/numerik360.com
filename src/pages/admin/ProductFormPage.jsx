@@ -23,6 +23,7 @@ export default function ProductFormPage() {
     slug: '',
     description: '',
     price: '',
+    promo_price: '',
     stock: '',
     category_id: '',
     is_active: true,
@@ -54,6 +55,7 @@ export default function ProductFormPage() {
         slug: data.slug,
         description: data.description ?? '',
         price: String(data.price),
+        promo_price: data.promo_price != null ? String(data.promo_price) : '',
         stock: String(data.stock),
         category_id: data.category_id ?? '',
         is_active: data.is_active,
@@ -132,6 +134,7 @@ export default function ProductFormPage() {
         slug: form.slug.trim(),
         description: form.description.trim(),
         price: parseFloat(form.price),
+        promo_price: form.promo_price !== '' ? parseFloat(form.promo_price) : null,
         stock: parseInt(form.stock, 10),
         category_id: form.category_id || null,
         is_active: form.is_active,
@@ -253,6 +256,25 @@ export default function ProductFormPage() {
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="5000"
               />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Prix promo (FCFA)
+                <span className="ml-1 text-xs text-gray-400 font-normal">— optionnel</span>
+              </label>
+              <input
+                type="number"
+                name="promo_price"
+                value={form.promo_price}
+                onChange={handleChange}
+                min="0"
+                step="1"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                placeholder="3500"
+              />
+              {form.promo_price && form.price && parseFloat(form.promo_price) >= parseFloat(form.price) && (
+                <p className="text-xs text-red-500 mt-1">Le prix promo doit être inférieur au prix normal.</p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Stock *</label>

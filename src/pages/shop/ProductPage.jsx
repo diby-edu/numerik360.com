@@ -3,6 +3,9 @@ import { useParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
 import Navbar from '../../components/shop/Navbar'
+import Footer from '../../components/shop/Footer'
+import WhatsAppButton from '../../components/shop/WhatsAppButton'
+import ProductCard from '../../components/shop/ProductCard'
 import useCartStore from '../../store/cartStore'
 
 function formatPrice(amount) {
@@ -15,18 +18,34 @@ export default function ProductPage() {
   const [quantity, setQuantity] = useState(1)
   const [activeImage, setActiveImage] = useState(0)
   const [added, setAdded] = useState(false)
+  const [lightbox, setLightbox] = useState(false)
 
   const { data: product, isLoading, isError } = useQuery({
     queryKey: ['product', slug],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('products')
-        .select('*, categories(name)')
+        .select('*, categories(name, slug)')
         .eq('slug', slug)
         .eq('is_active', true)
         .single()
       if (error) throw error
       return data
+    },
+  })
+
+  const { data: similarProducts = [] } = useQuery({
+    queryKey: ['similar-products', product?.category_id, product?.id],
+    enabled: Boolean(product?.category_id),
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('products')
+        .select('*')
+        .eq('is_active', true)
+        .eq('category_id', product.category_id)
+        .neq('id', product.id)
+        .limit(4)
+      return data ?? []
     },
   })
 
@@ -38,7 +57,7 @@ export default function ProductPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-theme-bg">
         <Navbar />
         <div className="max-w-5xl mx-auto px-4 py-12">
           <div className="animate-pulse grid md:grid-cols-2 gap-8">
@@ -56,7 +75,7 @@ export default function ProductPage() {
 
   if (isError || !product) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-theme-bg">
         <Navbar />
         <div className="text-center py-20">
           <p className="text-gray-500 mb-4">Produit introuvable.</p>
@@ -70,13 +89,74 @@ export default function ProductPage() {
     supabase.storage.from('products').getPublicUrl(path).data.publicUrl
   )
 
+  const hasPromo = product.promo_price && product.promo_price < product.price
+  const displayPrice = hasPromo ? product.promo_price : product.price
+  const discount = hasPromo ? Math.round((1 - product.promo_price / product.price) * 100) : 0
+
+  const pageUrl = encodeURIComponent(window.location.href)
+  const productName = encodeURIComponent(product.name)
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-theme-bg">
       <Navbar />
+
+      {/* Lightbox */}
+      {lightbox && imageUrls.length > 0 && (
+        <div
+          className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
+          onClick={() => setLightbox(false)}
+        >
+          <button
+            className="absolute top-4 right-4 text-white/80 hover:text-white"
+            onClick={() => setLightbox(false)}
+          >
+            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+          {activeImage > 0 && (
+            <button
+              className="absolute left-4 text-white/80 hover:text-white"
+              onClick={e => { e.stopPropagation(); setActiveImage(i => i - 1) }}
+            >
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+          )}
+          <img
+            src={imageUrls[activeImage]}
+            alt={product.name}
+            className="max-h-[85vh] max-w-full object-contain rounded-lg"
+            onClick={e => e.stopPropagation()}
+          />
+          {activeImage < imageUrls.length - 1 && (
+            <button
+              className="absolute right-4 text-white/80 hover:text-white"
+              onClick={e => { e.stopPropagation(); setActiveImage(i => i + 1) }}
+            >
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          )}
+          {imageUrls.length > 1 && (
+            <div className="absolute bottom-4 flex gap-2">
+              {imageUrls.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={e => { e.stopPropagation(); setActiveImage(i) }}
+                  className={`w-2 h-2 rounded-full transition-colors ${i === activeImage ? 'bg-white' : 'bg-white/40'}`}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="max-w-5xl mx-auto px-4 py-8">
         {/* Fil d'Ariane */}
-        <nav className="text-sm text-gray-500 mb-6 flex items-center gap-1.5">
+        <nav className="text-sm text-gray-500 mb-6 flex items-center gap-1.5 flex-wrap">
           <Link to="/" className="hover:text-primary">Accueil</Link>
           <span>/</span>
           <Link to="/boutique" className="hover:text-primary">Catalogue</Link>
@@ -89,19 +169,29 @@ export default function ProductPage() {
             </>
           )}
           <span>/</span>
-          <span className="text-gray-900">{product.name}</span>
+          <span className="text-gray-900 truncate max-w-[200px]">{product.name}</span>
         </nav>
 
         <div className="grid md:grid-cols-2 gap-8">
           {/* Galerie */}
           <div>
-            <div className="aspect-square bg-gray-100 rounded-xl overflow-hidden mb-3">
+            <div
+              className="aspect-square bg-gray-100 rounded-xl overflow-hidden mb-3 relative group cursor-zoom-in"
+              onClick={() => imageUrls.length > 0 && setLightbox(true)}
+            >
               {imageUrls.length > 0 ? (
-                <img
-                  src={imageUrls[activeImage]}
-                  alt={product.name}
-                  className="w-full h-full object-cover"
-                />
+                <>
+                  <img
+                    src={imageUrls[activeImage]}
+                    alt={product.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                    <svg className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                    </svg>
+                  </div>
+                </>
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-gray-300">
                   <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -111,13 +201,13 @@ export default function ProductPage() {
               )}
             </div>
             {imageUrls.length > 1 && (
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
                 {imageUrls.map((url, i) => (
                   <button
                     key={i}
                     onClick={() => setActiveImage(i)}
-                    className={`w-16 h-16 rounded-lg overflow-hidden border-2 transition-colors ${
-                      activeImage === i ? 'border-primary' : 'border-transparent'
+                    className={`w-16 h-16 rounded-lg overflow-hidden border-2 transition-colors flex-shrink-0 ${
+                      activeImage === i ? 'border-primary' : 'border-transparent hover:border-gray-300'
                     }`}
                   >
                     <img src={url} alt="" className="w-full h-full object-cover" />
@@ -130,17 +220,36 @@ export default function ProductPage() {
           {/* Infos produit */}
           <div>
             {product.categories && (
-              <p className="text-sm text-primary font-medium mb-2">{product.categories.name}</p>
+              <Link to={`/boutique?categorie=${product.categories.slug}`} className="text-sm text-primary font-medium mb-2 inline-block hover:underline">
+                {product.categories.name}
+              </Link>
             )}
             <h1 className="text-2xl font-bold text-gray-900 mb-3">{product.name}</h1>
-            <p className="text-3xl font-bold text-primary mb-4">{formatPrice(product.price)}</p>
 
-            <p className={`text-sm mb-6 font-medium ${product.stock > 0 ? 'text-green-600' : 'text-red-500'}`}>
+            {/* Prix */}
+            <div className="flex items-baseline gap-3 mb-2">
+              <span className="text-3xl font-bold text-primary">{formatPrice(displayPrice)}</span>
+              {hasPromo && (
+                <>
+                  <span className="text-lg text-gray-400 line-through">{formatPrice(product.price)}</span>
+                  <span className="bg-red-100 text-red-600 text-sm font-bold px-2 py-0.5 rounded-full">-{discount}%</span>
+                </>
+              )}
+            </div>
+
+            {hasPromo && (
+              <p className="text-sm text-red-600 font-medium mb-4">
+                Vous économisez {formatPrice(product.price - product.promo_price)}
+              </p>
+            )}
+
+            <p className={`text-sm mb-5 font-medium flex items-center gap-1.5 ${product.stock > 0 ? 'text-green-600' : 'text-red-500'}`}>
+              <span className={`w-2 h-2 rounded-full ${product.stock > 0 ? 'bg-green-500' : 'bg-red-500'}`} />
               {product.stock > 0 ? `En stock (${product.stock} disponibles)` : 'Rupture de stock'}
             </p>
 
             {product.description && (
-              <p className="text-gray-600 text-sm leading-relaxed mb-6">{product.description}</p>
+              <p className="text-gray-600 text-sm leading-relaxed mb-6 border-t border-gray-100 pt-5">{product.description}</p>
             )}
 
             {product.stock > 0 && (
@@ -151,14 +260,14 @@ export default function ProductPage() {
                   <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden">
                     <button
                       onClick={() => setQuantity(q => Math.max(1, q - 1))}
-                      className="px-3 py-2 text-gray-600 hover:bg-gray-100 transition-colors"
+                      className="px-3 py-2 text-gray-600 hover:bg-gray-100 transition-colors font-bold"
                     >
                       −
                     </button>
                     <span className="px-4 py-2 text-sm font-medium min-w-[3rem] text-center">{quantity}</span>
                     <button
                       onClick={() => setQuantity(q => Math.min(product.stock, q + 1))}
-                      className="px-3 py-2 text-gray-600 hover:bg-gray-100 transition-colors"
+                      className="px-3 py-2 text-gray-600 hover:bg-gray-100 transition-colors font-bold"
                     >
                       +
                     </button>
@@ -167,26 +276,91 @@ export default function ProductPage() {
 
                 <button
                   onClick={handleAddToCart}
-                  className={`w-full py-3 rounded-xl font-bold text-sm transition-colors ${
+                  className={`w-full py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 ${
                     added
-                      ? 'bg-green-600 text-white'
-                      : 'bg-primary text-white hover:bg-blue-700'
+                      ? 'bg-green-600 text-white scale-95'
+                      : 'bg-primary text-white hover:bg-primary-dark'
                   }`}
                 >
-                  {added ? '✓ Ajouté au panier' : 'Ajouter au panier'}
+                  {added ? (
+                    <>
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      Ajouté au panier
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                      </svg>
+                      Ajouter au panier
+                    </>
+                  )}
                 </button>
 
                 <Link
                   to="/panier"
                   className="block text-center mt-3 text-sm text-gray-500 hover:text-primary underline"
                 >
-                  Voir le panier
+                  Voir le panier →
                 </Link>
               </>
             )}
+
+            {/* Partage */}
+            <div className="mt-6 pt-5 border-t border-gray-100">
+              <p className="text-xs text-gray-400 mb-2 font-medium uppercase tracking-wide">Partager</p>
+              <div className="flex gap-2">
+                <a
+                  href={`https://www.facebook.com/sharer/sharer.php?u=${pageUrl}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-8 h-8 rounded-full bg-[#1877F2] text-white flex items-center justify-center hover:opacity-80 transition-opacity"
+                  title="Partager sur Facebook"
+                >
+                  <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                    <path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z" />
+                  </svg>
+                </a>
+                <a
+                  href={`https://wa.me/?text=${productName}%20${pageUrl}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-8 h-8 rounded-full bg-[#25D366] text-white flex items-center justify-center hover:opacity-80 transition-opacity"
+                  title="Partager sur WhatsApp"
+                >
+                  <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+                  </svg>
+                </a>
+                <button
+                  onClick={() => { navigator.clipboard.writeText(window.location.href) }}
+                  className="w-8 h-8 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center hover:bg-gray-200 transition-colors"
+                  title="Copier le lien"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
+
+        {/* Produits similaires */}
+        {similarProducts.length > 0 && (
+          <section className="mt-16">
+            <h2 className="text-xl font-bold text-gray-900 mb-6">Produits similaires</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+              {similarProducts.map(p => <ProductCard key={p.id} product={p} />)}
+            </div>
+          </section>
+        )}
       </div>
+
+      <Footer />
+      <WhatsAppButton />
     </div>
   )
 }
