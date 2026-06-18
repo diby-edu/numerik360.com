@@ -47,12 +47,12 @@ const useCartStore = create(
         get()._clearRemote()
       },
 
-      get total() {
-        return get().items.reduce(
-          (sum, i) => sum + i.product.price * i.quantity,
-          0
-        )
-      },
+      getTotal: () => get().items.reduce((sum, { product, quantity }) => {
+        const price = product.promo_price && product.promo_price < product.price
+          ? product.promo_price
+          : product.price
+        return sum + price * quantity
+      }, 0),
 
       getCount: () =>
         get().items.reduce((sum, i) => sum + i.quantity, 0),

@@ -8,7 +8,8 @@ function formatPrice(amount) {
 }
 
 export default function CartPage() {
-  const { items, removeItem, updateQuantity, total } = useCartStore()
+  const { items, removeItem, updateQuantity, getTotal } = useCartStore()
+  const total = getTotal()
 
   if (items.length === 0) {
     return (
@@ -58,7 +59,7 @@ export default function CartPage() {
                   <Link to={`/produit/${product.slug}`} className="font-medium text-gray-900 hover:text-primary text-sm line-clamp-1">
                     {product.name}
                   </Link>
-                  <p className="text-primary font-bold text-sm mt-0.5">{formatPrice(product.price)}</p>
+                  <p className="text-primary font-bold text-sm mt-0.5">{formatPrice(product.promo_price && product.promo_price < product.price ? product.promo_price : product.price)}</p>
                 </div>
 
                 <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden">
@@ -78,7 +79,7 @@ export default function CartPage() {
                 </div>
 
                 <p className="font-bold text-gray-900 text-sm w-24 text-right">
-                  {formatPrice(product.price * quantity)}
+                  {formatPrice((product.promo_price && product.promo_price < product.price ? product.promo_price : product.price) * quantity)}
                 </p>
 
                 <button

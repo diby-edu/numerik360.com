@@ -14,7 +14,7 @@ export default function ProductsPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('products')
-        .select('id, name, price, stock, is_active, images, categories(name)')
+        .select('id, name, price, price_max, stock, is_active, images, categories(name)')
         .order('created_at', { ascending: false })
       if (error) throw error
       return data
@@ -105,7 +105,11 @@ export default function ProductsPage() {
                       </div>
                     </td>
                     <td className="px-4 py-3 text-gray-500">{p.categories?.name ?? '—'}</td>
-                    <td className="px-4 py-3 font-medium">{formatPrice(p.price)}</td>
+                    <td className="px-4 py-3 font-medium">
+                      {p.price_max && p.price_max > p.price
+                        ? `${formatPrice(p.price)} – ${formatPrice(p.price_max)}`
+                        : formatPrice(p.price)}
+                    </td>
                     <td className="px-4 py-3 text-gray-700">{p.stock}</td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${

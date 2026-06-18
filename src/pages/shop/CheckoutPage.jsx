@@ -17,13 +17,14 @@ function formatPrice(amount) {
 
 const PAYMENT_OPTIONS = [
   { value: 'delivery', label: 'Paiement à la livraison', icon: '🚚', desc: 'Payez en espèces à la réception' },
-  { value: 'paydunya', label: 'PayDunya', icon: '💳', desc: 'Wave, Orange Money, carte bancaire...' },
+  { value: 'paydunya', label: 'Payer en ligne', icon: '💳', desc: 'Wave, Orange Money, carte bancaire...' },
 ]
 
 export default function CheckoutPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const { items, total, clearCart } = useCartStore()
+  const { items, getTotal, clearCart } = useCartStore()
+  const total = getTotal()
   const { user, loading: authLoading } = useAuth()
   const [form, setForm] = useState({ name: '', email: '', phone: '', address: '' })
   const [paymentMethod, setPaymentMethod] = useState('delivery')
@@ -302,7 +303,7 @@ export default function CheckoutPage() {
                   </>
                 ) : paymentMethod === 'paydunya' ? (
                   <>
-                    <span>💳</span> Payer avec PayDunya
+                    <span>💳</span> Payer en ligne
                   </>
                 ) : (
                   'Confirmer la commande'
