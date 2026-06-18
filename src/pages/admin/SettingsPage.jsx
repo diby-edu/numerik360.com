@@ -10,7 +10,10 @@ async function fetchSettings() {
 }
 
 async function saveSetting(key, value) {
-  await supabase.from('settings').upsert({ key, value: String(value) })
+  const { error } = await supabase
+    .from('settings')
+    .upsert({ key, value: String(value) }, { onConflict: 'key' })
+  if (error) throw error
 }
 
 /* ── Toggle switch ── */
@@ -154,6 +157,7 @@ const HERO_MODES = [
 export default function SettingsPage() {
   const queryClient = useQueryClient()
   const [saved, setSaved] = useState(false)
+  const [saveError, setSaveError] = useState('')
   const [uploading, setUploading] = useState(false)
   const fileInputRef = useRef(null)
 
@@ -165,16 +169,20 @@ export default function SettingsPage() {
   const mutation = useMutation({
     mutationFn: ({ key, value }) => saveSetting(key, value),
     onSuccess: () => {
-      queryClient.invalidateQueries(['admin-settings'])
-      queryClient.invalidateQueries(['active-theme'])
-      queryClient.invalidateQueries(['hero-settings'])
-      queryClient.invalidateQueries(['setting', 'guest_checkout'])
-      queryClient.invalidateQueries(['announcement'])
-      queryClient.invalidateQueries(['footer-settings'])
-      queryClient.invalidateQueries(['whatsapp-number'])
-      queryClient.invalidateQueries(['contact-settings'])
+      queryClient.invalidateQueries({ queryKey: ['admin-settings'] })
+      queryClient.invalidateQueries({ queryKey: ['active-theme'] })
+      queryClient.invalidateQueries({ queryKey: ['hero-settings'] })
+      queryClient.invalidateQueries({ queryKey: ['setting', 'guest_checkout'] })
+      queryClient.invalidateQueries({ queryKey: ['announcement'] })
+      queryClient.invalidateQueries({ queryKey: ['footer-settings'] })
+      queryClient.invalidateQueries({ queryKey: ['whatsapp-number'] })
+      queryClient.invalidateQueries({ queryKey: ['shop-name'] })
+      setSaveError('')
       setSaved(true)
       setTimeout(() => setSaved(false), 2500)
+    },
+    onError: (err) => {
+      setSaveError(err.message || 'Erreur lors de la sauvegarde')
     },
   })
 
@@ -235,6 +243,11 @@ export default function SettingsPage() {
         {saved && (
           <span className="text-sm text-green-600 font-medium bg-green-50 px-3 py-1 rounded-full border border-green-200">
             ✓ Sauvegardé
+          </span>
+        )}
+        {saveError && (
+          <span className="text-sm text-red-600 font-medium bg-red-50 px-3 py-1 rounded-full border border-red-200">
+            ✗ {saveError}
           </span>
         )}
       </div>
