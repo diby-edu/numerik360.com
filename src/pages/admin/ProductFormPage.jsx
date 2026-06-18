@@ -33,7 +33,6 @@ export default function ProductFormPage() {
   })
   const [images, setImages] = useState([])         // fichiers File à uploader
   const [existingImages, setExistingImages] = useState([])  // paths déjà en base
-  const [keywords, setKeywords] = useState('')
   const [generating, setGenerating] = useState(false)
   const [generatingSEO, setGeneratingSEO] = useState(false)
   const [descError, setDescError] = useState('')
@@ -108,7 +107,7 @@ export default function ProductFormPage() {
     setGenerating(true)
     setDescError('')
     try {
-      const desc = await generateProductDescription(form.name, keywords || form.name)
+      const desc = await generateProductDescription(form.name, form.name)
       setForm(f => ({ ...f, description: desc }))
     } catch (err) {
       setDescError(err.message || 'Erreur lors de la génération. Vérifiez la clé OpenAI sur le VPS.')
@@ -222,15 +221,8 @@ export default function ProductFormPage() {
 
           {/* Description + génération */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-            <div className="mb-2 flex gap-2">
-              <input
-                type="text"
-                value={keywords}
-                onChange={e => setKeywords(e.target.value)}
-                placeholder="Mots-clés pour aider ChatGPT (ex: rapide, professionnel, sur-mesure)"
-                className="flex-1 border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              />
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-sm font-medium text-gray-700">Description</label>
               <button
                 type="button"
                 onClick={handleGenerateDescription}
