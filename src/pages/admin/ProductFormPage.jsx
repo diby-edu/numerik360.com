@@ -36,6 +36,7 @@ export default function ProductFormPage() {
   const [keywords, setKeywords] = useState('')
   const [generating, setGenerating] = useState(false)
   const [generatingSEO, setGeneratingSEO] = useState(false)
+  const [descError, setDescError] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
@@ -101,16 +102,16 @@ export default function ProductFormPage() {
 
   async function handleGenerateDescription() {
     if (!form.name.trim()) {
-      setError('Renseignez d\'abord le nom du produit.')
+      setDescError('Renseignez d\'abord le nom du produit.')
       return
     }
     setGenerating(true)
-    setError('')
+    setDescError('')
     try {
       const desc = await generateProductDescription(form.name, keywords || form.name)
       setForm(f => ({ ...f, description: desc }))
-    } catch {
-      setError('Erreur lors de la génération. Vérifiez votre clé OpenAI.')
+    } catch (err) {
+      setDescError(err.message || 'Erreur lors de la génération. Vérifiez la clé OpenAI sur le VPS.')
     } finally {
       setGenerating(false)
     }
@@ -227,7 +228,7 @@ export default function ProductFormPage() {
                 type="text"
                 value={keywords}
                 onChange={e => setKeywords(e.target.value)}
-                placeholder="Mots-clés (optionnel)"
+                placeholder="Mots-clés pour aider ChatGPT (ex: rapide, professionnel, sur-mesure)"
                 className="flex-1 border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               />
               <button
@@ -260,8 +261,11 @@ export default function ProductFormPage() {
               onChange={handleChange}
               rows={4}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"
-              placeholder="Description du produit..."
+              placeholder="Description du produit... (ou cliquez sur Générer avec ChatGPT)"
             />
+            {descError && (
+              <p className="text-xs text-red-600 mt-1">{descError}</p>
+            )}
           </div>
         </div>
 
