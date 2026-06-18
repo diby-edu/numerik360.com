@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
@@ -48,6 +48,25 @@ export default function ProductPage() {
       return data ?? []
     },
   })
+
+  // Balises meta SEO dynamiques
+  useEffect(() => {
+    if (!product) return
+    const title = product.seo_title || product.name
+    const desc = product.seo_description || product.description || ''
+    document.title = title
+    let metaDesc = document.querySelector('meta[name="description"]')
+    if (!metaDesc) {
+      metaDesc = document.createElement('meta')
+      metaDesc.name = 'description'
+      document.head.appendChild(metaDesc)
+    }
+    metaDesc.content = desc
+    return () => {
+      document.title = 'Boutique'
+      metaDesc.content = ''
+    }
+  }, [product])
 
   function handleAddToCart() {
     addItem(product, quantity)

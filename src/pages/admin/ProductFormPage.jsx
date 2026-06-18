@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
-import { generateProductDescription } from '../../lib/openai'
+import { generateProductDescription, generateProductSEO } from '../../lib/openai'
 
 function slugify(text) {
   return text
@@ -27,11 +27,14 @@ export default function ProductFormPage() {
     stock: '',
     category_id: '',
     is_active: true,
+    seo_title: '',
+    seo_description: '',
   })
   const [images, setImages] = useState([])         // fichiers File à uploader
   const [existingImages, setExistingImages] = useState([])  // paths déjà en base
   const [keywords, setKeywords] = useState('')
   const [generating, setGenerating] = useState(false)
+  const [generatingSEO, setGeneratingSEO] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
@@ -59,6 +62,8 @@ export default function ProductFormPage() {
         stock: String(data.stock),
         category_id: data.category_id ?? '',
         is_active: data.is_active,
+        seo_title: data.seo_title ?? '',
+        seo_description: data.seo_description ?? '',
       })
       setExistingImages(data.images ?? [])
     })
@@ -109,6 +114,23 @@ export default function ProductFormPage() {
     }
   }
 
+  async function handleGenerateSEO() {
+    if (!form.name.trim()) {
+      setError('Renseignez d\'abord le nom du produit.')
+      return
+    }
+    setGeneratingSEO(true)
+    setError('')
+    try {
+      const seo = await generateProductSEO(form.name, form.description)
+      setForm(f => ({ ...f, seo_title: seo.title, seo_description: seo.description }))
+    } catch (err) {
+      setError(err.message || 'Erreur lors de la génération SEO.')
+    } finally {
+      setGeneratingSEO(false)
+    }
+  }
+
   async function handleSubmit(e) {
     e.preventDefault()
     setError('')
@@ -139,6 +161,8 @@ export default function ProductFormPage() {
         category_id: form.category_id || null,
         is_active: form.is_active,
         images: allImages,
+        seo_title: form.seo_title.trim() || null,
+        seo_description: form.seo_description.trim() || null,
       }
 
       if (isEdit) {
@@ -376,6 +400,89 @@ export default function ProductFormPage() {
                 className="hidden"
               />
             </label>
+          )}
+        </div>
+
+        {/* SEO */}
+        <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="font-semibold text-gray-900">SEO</h2>
+              <p className="text-xs text-gray-400 mt-0.5">Balises meta affichées dans les moteurs de recherche</p>
+            </div>
+            <button
+              type="button"
+              onClick={handleGenerateSEO}
+              disabled={generatingSEO}
+              className="flex items-center gap-1.5 bg-gray-900 text-white px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-gray-700 transition-colors disabled:opacity-60"
+            >
+              {generatingSEO ? (
+                <>
+                  <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                  </svg>
+                  Génération...
+                </>
+              ) : (
+                <>
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  Générer avec ChatGPT
+                </>
+              )}
+            </button>
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-sm font-medium text-gray-700">Titre SEO</label>
+              <span className={`text-xs ${form.seo_title.length > 60 ? 'text-red-500' : 'text-gray-400'}`}>
+                {form.seo_title.length}/60
+              </span>
+            </div>
+            <input
+              type="text"
+              name="seo_title"
+              value={form.seo_title}
+              onChange={handleChange}
+              maxLength={80}
+              placeholder="Titre affiché dans Google (max 60 caractères)"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-sm font-medium text-gray-700">Meta description</label>
+              <span className={`text-xs ${form.seo_description.length > 155 ? 'text-red-500' : 'text-gray-400'}`}>
+                {form.seo_description.length}/155
+              </span>
+            </div>
+            <textarea
+              name="seo_description"
+              value={form.seo_description}
+              onChange={handleChange}
+              rows={2}
+              maxLength={200}
+              placeholder="Description affichée sous le titre dans Google (max 155 caractères)"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+            />
+          </div>
+
+          {/* Aperçu Google */}
+          {(form.seo_title || form.seo_description) && (
+            <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+              <p className="text-xs text-gray-400 mb-2 font-medium uppercase tracking-wide">Aperçu Google</p>
+              <p className="text-[#1a0dab] text-base font-medium leading-tight hover:underline cursor-pointer truncate">
+                {form.seo_title || form.name}
+              </p>
+              <p className="text-[#006621] text-xs mt-0.5">numerik360.com/produit/{form.slug}</p>
+              <p className="text-[#545454] text-sm mt-1 leading-relaxed line-clamp-2">
+                {form.seo_description || form.description || 'Aucune description.'}
+              </p>
+            </div>
           )}
         </div>
 
