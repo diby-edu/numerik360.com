@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useQuery, useMutation } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
 import Navbar from '../../components/shop/Navbar'
 import Footer from '../../components/shop/Footer'
@@ -52,31 +52,11 @@ const WHY_US = [
   },
 ]
 
-/* ── Témoignages ── */
-const TESTIMONIALS = [
-  {
-    name: 'Aminata D.',
-    text: 'Excellente boutique ! La livraison était rapide et les produits correspondent parfaitement à la description. Je recommande vivement.',
-    rating: 5,
-    avatar: 'A',
-  },
-  {
-    name: 'Ousmane K.',
-    text: 'Service client très réactif. J\'ai eu un souci avec ma commande et ils l\'ont résolu en moins de 2 heures. Vraiment impressionnant.',
-    rating: 5,
-    avatar: 'O',
-  },
-  {
-    name: 'Fatou B.',
-    text: 'Qualité des produits au top. Je suis cliente depuis 6 mois et je n\'ai jamais été déçue. Prix compétitifs et livraison soignée.',
-    rating: 5,
-    avatar: 'F',
-  },
-]
-
 export default function HomePage() {
+  const qc = useQueryClient()
   const [email, setEmail] = useState('')
   const [subscribed, setSubscribed] = useState(false)
+  const [subError, setSubError] = useState('')
 
   const { data: categories = [] } = useQuery({
     queryKey: ['categories-public'],
@@ -113,6 +93,38 @@ export default function HomePage() {
     },
   })
 
+  const { data: testimonials = [] } = useQuery({
+    queryKey: ['testimonials-public'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('testimonials')
+        .select('*')
+        .eq('is_active', true)
+        .order('created_at', { ascending: false })
+        .limit(6)
+      return data ?? []
+    },
+  })
+
+  const subscribeMutation = useMutation({
+    mutationFn: async (email) => {
+      const { error } = await supabase.from('newsletter_subscribers').insert({ email })
+      if (error) throw error
+    },
+    onSuccess: () => {
+      setSubscribed(true)
+      setEmail('')
+      setSubError('')
+    },
+    onError: (err) => {
+      if (err.message?.includes('unique') || err.code === '23505') {
+        setSubError('Cet email est déjà inscrit.')
+      } else {
+        setSubError('Une erreur est survenue. Réessayez.')
+      }
+    },
+  })
+
   const { data: stats } = useQuery({
     queryKey: ['shop-stats'],
     queryFn: async () => {
@@ -126,8 +138,8 @@ export default function HomePage() {
 
   function handleNewsletter(e) {
     e.preventDefault()
-    setSubscribed(true)
-    setEmail('')
+    setSubError('')
+    subscribeMutation.mutate(email)
   }
 
   return (
@@ -222,31 +234,33 @@ export default function HomePage() {
       </section>
 
       {/* ── Témoignages ── */}
-      <section className="bg-gray-50 py-14">
-        <div className="max-w-6xl mx-auto px-4">
-          <h2 className="text-2xl font-bold text-gray-900 text-center mb-10">Ce que disent nos clients</h2>
-          <div className="grid md:grid-cols-3 gap-6">
-            {TESTIMONIALS.map((t, i) => (
-              <div key={i} className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex gap-1 mb-4">
-                  {Array.from({ length: t.rating }).map((_, j) => (
-                    <svg key={j} className="w-4 h-4 text-yellow-400 fill-current" viewBox="0 0 20 20">
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                    </svg>
-                  ))}
-                </div>
-                <p className="text-gray-600 text-sm leading-relaxed mb-5 italic">"{t.text}"</p>
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm">
-                    {t.avatar}
+      {testimonials.length > 0 && (
+        <section className="bg-gray-50 py-14">
+          <div className="max-w-6xl mx-auto px-4">
+            <h2 className="text-2xl font-bold text-gray-900 text-center mb-10">Ce que disent nos clients</h2>
+            <div className="grid md:grid-cols-3 gap-6">
+              {testimonials.map((t) => (
+                <div key={t.id} className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                  <div className="flex gap-1 mb-4">
+                    {Array.from({ length: t.rating }).map((_, j) => (
+                      <svg key={j} className="w-4 h-4 text-yellow-400 fill-current" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                      </svg>
+                    ))}
                   </div>
-                  <p className="font-semibold text-gray-900 text-sm">{t.name}</p>
+                  <p className="text-gray-600 text-sm leading-relaxed mb-5 italic">"{t.text}"</p>
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm">
+                      {t.avatar}
+                    </div>
+                    <p className="font-semibold text-gray-900 text-sm">{t.name}</p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* ── Newsletter ── */}
       <section className="max-w-2xl mx-auto px-4 py-16 text-center">
@@ -257,22 +271,26 @@ export default function HomePage() {
             ✓ Merci pour votre inscription !
           </div>
         ) : (
-          <form onSubmit={handleNewsletter} className="flex gap-3 max-w-md mx-auto">
-            <input
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              required
-              placeholder="votre@email.com"
-              className="flex-1 border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-            <button
-              type="submit"
-              className="bg-primary text-white font-bold px-6 py-3 rounded-xl text-sm hover:bg-primary-dark transition-colors flex-shrink-0"
-            >
-              S'inscrire
-            </button>
-          </form>
+          <>
+            <form onSubmit={handleNewsletter} className="flex gap-3 max-w-md mx-auto">
+              <input
+                type="email"
+                value={email}
+                onChange={e => { setEmail(e.target.value); setSubError('') }}
+                required
+                placeholder="votre@email.com"
+                className={`flex-1 border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary ${subError ? 'border-red-400' : 'border-gray-300'}`}
+              />
+              <button
+                type="submit"
+                disabled={subscribeMutation.isPending}
+                className="bg-primary text-white font-bold px-6 py-3 rounded-xl text-sm hover:bg-primary-dark transition-colors flex-shrink-0 disabled:opacity-60"
+              >
+                {subscribeMutation.isPending ? '...' : "S'inscrire"}
+              </button>
+            </form>
+            {subError && <p className="text-red-500 text-sm mt-2">{subError}</p>}
+          </>
         )}
       </section>
 

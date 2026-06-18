@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
 
 async function fetchFooterSettings() {
-  const keys = ['social_facebook', 'social_instagram', 'social_twitter', 'contact_email', 'contact_phone', 'contact_address']
+  const keys = ['social_facebook', 'social_instagram', 'social_twitter', 'contact_email', 'contact_phone', 'contact_address', 'shop_name']
   const { data } = await supabase.from('settings').select('key, value').in('key', keys)
   return Object.fromEntries((data ?? []).map(r => [r.key, r.value]))
 }
@@ -24,7 +24,7 @@ export default function Footer() {
 
           {/* Colonne 1 — Marque */}
           <div>
-            <h3 className="text-white font-bold text-lg mb-4">Boutique</h3>
+            <h3 className="text-white font-bold text-lg mb-4">{s.shop_name || 'Boutique'}</h3>
             <p className="text-sm text-gray-400 leading-relaxed mb-4">
               Votre destination shopping en ligne. Produits de qualité, livrés chez vous.
             </p>
@@ -117,7 +117,7 @@ export default function Footer() {
 
         {/* Barre bas */}
         <div className="border-t border-gray-800 mt-10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-500">
-          <p>© {year} Boutique numerik360. Tous droits réservés.</p>
+          <p>© {year} {s.shop_name || 'Boutique'}. Tous droits réservés.</p>
           <div className="flex gap-4">
             <span>Paiement sécurisé</span>
             <span>•</span>

@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { Link, NavLink } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
+import { supabase } from '../../lib/supabase'
 import useCartStore from '../../store/cartStore'
 import { useAuth } from '../../hooks/useAuth'
 import AnnouncementBar from './AnnouncementBar'
@@ -10,6 +12,15 @@ export default function Navbar() {
   const { user } = useAuth()
   const [menuOpen, setMenuOpen] = useState(false)
 
+  const { data: shopName = 'Boutique' } = useQuery({
+    queryKey: ['shop-name'],
+    queryFn: async () => {
+      const { data } = await supabase.from('settings').select('value').eq('key', 'shop_name').single()
+      return data?.value || 'Boutique'
+    },
+    staleTime: 60000,
+  })
+
   const navLinkClass = ({ isActive }) =>
     `hover:text-gray-900 transition-colors ${isActive ? 'text-primary font-semibold' : ''}`
 
@@ -18,7 +29,7 @@ export default function Navbar() {
       <AnnouncementBar />
       <header className="bg-white border-b border-gray-200 sticky top-0 z-20">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-          <Link to="/" className="text-xl font-bold text-primary">Boutique</Link>
+          <Link to="/" className="text-xl font-bold text-primary">{shopName}</Link>
 
           {/* Desktop nav */}
           <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-gray-600">
@@ -90,6 +101,7 @@ export default function Navbar() {
             <div className="border-t border-gray-100 pt-3">
               {user ? (
                 <NavLink to="/mon-compte/commandes" className="block text-sm font-medium text-gray-700 py-1 hover:text-primary" onClick={() => setMenuOpen(false)}>Mon compte</NavLink>
+
               ) : (
                 <>
                   <NavLink to="/connexion" className="block text-sm font-medium text-gray-700 py-1 hover:text-primary" onClick={() => setMenuOpen(false)}>Connexion</NavLink>

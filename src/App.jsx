@@ -31,6 +31,8 @@ import ProductFormPage from './pages/admin/ProductFormPage'
 import OrdersPage from './pages/admin/OrdersPage'
 import CategoriesPage from './pages/admin/CategoriesPage'
 import SettingsPage from './pages/admin/SettingsPage'
+import TestimonialsPage from './pages/admin/TestimonialsPage'
+import NewsletterPage from './pages/admin/NewsletterPage'
 
 // Espace client - détail commande
 import AccountOrderDetailPage from './pages/shop/account/AccountOrderDetailPage'
@@ -95,6 +97,8 @@ export default function App() {
           <Route path="produits/:id/modifier" element={<ProductFormPage />} />
           <Route path="commandes" element={<OrdersPage />} />
           <Route path="categories" element={<CategoriesPage />} />
+          <Route path="temoignages" element={<TestimonialsPage />} />
+          <Route path="newsletter" element={<NewsletterPage />} />
           <Route path="parametres" element={<SettingsPage />} />
         </Route>
 

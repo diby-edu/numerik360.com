@@ -387,6 +387,19 @@ export default function SettingsPage() {
         )}
       </section>
 
+      {/* ═══ SECTION : NOM DE LA BOUTIQUE ═══ */}
+      <section className="bg-white rounded-xl border border-gray-200 p-6">
+        <h2 className="text-lg font-bold text-gray-900 mb-1">Nom de la boutique</h2>
+        <p className="text-sm text-gray-500 mb-4">Apparaît dans la navbar, le footer et les emails.</p>
+        <input
+          type="text"
+          defaultValue={settings.shop_name ?? 'Boutique'}
+          onBlur={e => set('shop_name', e.target.value)}
+          className="w-full max-w-sm border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="Ex: Ma Boutique"
+        />
+      </section>
+
       {/* ═══ SECTION : BARRE D'ANNONCE ═══ */}
       <section className="bg-white rounded-xl border border-gray-200 p-6 space-y-5">
         <div>
