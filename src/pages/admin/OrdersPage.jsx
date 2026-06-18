@@ -27,8 +27,16 @@ const NEXT_STATUS = {
 
 const PAYMENT_LABELS = {
   delivery: 'À la livraison',
+  paydunya: 'PayDunya',
   wave: 'Wave',
   orange_money: 'Orange Money',
+}
+
+const PAYMENT_STATUS_LABELS = {
+  paid:   { label: 'Payé',     color: 'bg-green-100 text-green-700' },
+  pending:{ label: 'En attente', color: 'bg-yellow-100 text-yellow-700' },
+  cod:    { label: 'À la livraison', color: 'bg-gray-100 text-gray-600' },
+  unpaid: { label: 'Non payé', color: 'bg-red-100 text-red-700' },
 }
 
 function formatPrice(amount) {
@@ -59,15 +67,23 @@ export default function OrdersPage() {
   })
 
   const statusMutation = useMutation({
-    mutationFn: async ({ id, status }) => {
+    mutationFn: async ({ id, status, order }) => {
       const { error } = await supabase.from('orders').update({ status }).eq('id', id)
       if (error) throw error
+      // Envoyer email si le client a une adresse email
+      if (order?.customer_email) {
+        await fetch('/api/notify-status', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ order, newStatus: status }),
+        })
+      }
     },
-    onSuccess: () => {
+    onSuccess: (_, { status }) => {
       qc.invalidateQueries({ queryKey: ['orders'] })
       qc.invalidateQueries({ queryKey: ['orders-all'] })
       if (selectedOrder) {
-        setSelectedOrder(prev => ({ ...prev, status: NEXT_STATUS[prev.status] ?? prev.status }))
+        setSelectedOrder(prev => ({ ...prev, status }))
       }
     },
   })
@@ -105,6 +121,7 @@ export default function OrdersPage() {
                 <th className="px-4 py-3 font-medium">Date</th>
                 <th className="px-4 py-3 font-medium">Total</th>
                 <th className="px-4 py-3 font-medium">Paiement</th>
+                <th className="px-4 py-3 font-medium">Paiement statut</th>
                 <th className="px-4 py-3 font-medium">Statut</th>
                 <th className="px-4 py-3 font-medium text-right">Actions</th>
               </tr>
@@ -118,6 +135,7 @@ export default function OrdersPage() {
               )}
               {orders.map(order => {
                 const s = STATUS_LABELS[order.status] ?? STATUS_LABELS.pending
+                const ps = PAYMENT_STATUS_LABELS[order.payment_status] ?? PAYMENT_STATUS_LABELS.unpaid
                 const next = NEXT_STATUS[order.status]
                 return (
                   <tr key={order.id} className="hover:bg-gray-50">
@@ -130,6 +148,11 @@ export default function OrdersPage() {
                     <td className="px-4 py-3 text-gray-500 text-xs">{formatDate(order.created_at)}</td>
                     <td className="px-4 py-3 font-medium">{formatPrice(order.total)}</td>
                     <td className="px-4 py-3 text-gray-500">{PAYMENT_LABELS[order.payment_method] ?? order.payment_method}</td>
+                    <td className="px-4 py-3">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${ps.color}`}>
+                        {ps.label}
+                      </span>
+                    </td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${s.color}`}>
                         {s.label}
@@ -145,7 +168,7 @@ export default function OrdersPage() {
                         </button>
                         {next && (
                           <button
-                            onClick={() => statusMutation.mutate({ id: order.id, status: next })}
+                            onClick={() => statusMutation.mutate({ id: order.id, status: next, order })}
                             disabled={statusMutation.isPending}
                             className="text-xs text-gray-600 hover:text-gray-900 font-medium"
                           >
@@ -185,13 +208,26 @@ export default function OrdersPage() {
                   <p className="text-gray-500">Téléphone</p>
                   <p className="font-medium">{selectedOrder.customer_phone}</p>
                 </div>
+                {selectedOrder.customer_email && (
+                  <div className="col-span-2">
+                    <p className="text-gray-500">Email</p>
+                    <p className="font-medium">{selectedOrder.customer_email}</p>
+                  </div>
+                )}
                 <div className="col-span-2">
                   <p className="text-gray-500">Adresse</p>
                   <p className="font-medium">{selectedOrder.customer_address}</p>
                 </div>
                 <div>
-                  <p className="text-gray-500">Paiement</p>
-                  <p className="font-medium">{PAYMENT_LABELS[selectedOrder.payment_method]}</p>
+                  <p className="text-gray-500">Mode de paiement</p>
+                  <p className="font-medium">{PAYMENT_LABELS[selectedOrder.payment_method] ?? selectedOrder.payment_method}</p>
+                </div>
+                <div>
+                  <p className="text-gray-500">Statut paiement</p>
+                  {(() => {
+                    const ps = PAYMENT_STATUS_LABELS[selectedOrder.payment_status] ?? PAYMENT_STATUS_LABELS.unpaid
+                    return <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${ps.color}`}>{ps.label}</span>
+                  })()}
                 </div>
                 <div>
                   <p className="text-gray-500">Date</p>
@@ -224,14 +260,16 @@ export default function OrdersPage() {
                 <button
                   onClick={() => {
                     const next = NEXT_STATUS[selectedOrder.status]
-                    statusMutation.mutate({ id: selectedOrder.id, status: next })
-                    setSelectedOrder(prev => ({ ...prev, status: next }))
+                    statusMutation.mutate({ id: selectedOrder.id, status: next, order: selectedOrder })
                   }}
                   disabled={statusMutation.isPending}
                   className="w-full bg-primary text-white py-2.5 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-60"
                 >
-                  Passer à : {STATUS_LABELS[NEXT_STATUS[selectedOrder.status]].label}
+                  {statusMutation.isPending ? 'Mise à jour...' : `Passer à : ${STATUS_LABELS[NEXT_STATUS[selectedOrder.status]].label}`}
                 </button>
+              )}
+              {!selectedOrder.customer_email && (
+                <p className="text-xs text-gray-400 text-center">Pas d'email — aucune notification ne sera envoyée</p>
               )}
             </div>
           </div>
