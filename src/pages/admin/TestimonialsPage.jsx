@@ -29,8 +29,9 @@ export default function TestimonialsPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
-  const { data: testimonials = [], isLoading } = useQuery({
+  const { data: testimonials = [], isLoading, isError: queryError } = useQuery({
     queryKey: ['admin-testimonials'],
+    retry: 0,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('testimonials')
@@ -216,6 +217,11 @@ export default function TestimonialsPage() {
       {isLoading ? (
         <div className="flex justify-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+        </div>
+      ) : queryError ? (
+        <div className="text-center py-16 text-red-500 bg-white rounded-xl border border-red-200">
+          <p className="font-medium">Table introuvable</p>
+          <p className="text-sm mt-1 text-gray-500">Exécutez <code>schema-boutique-config.sql</code> dans Supabase SQL Editor.</p>
         </div>
       ) : testimonials.length === 0 ? (
         <div className="text-center py-16 text-gray-400 bg-white rounded-xl border border-gray-200">

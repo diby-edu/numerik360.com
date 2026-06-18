@@ -82,7 +82,7 @@ export default function AdminLayout() {
 
   async function handleLogout() {
     await supabase.auth.signOut()
-    navigate('/admin/login')
+    window.location.href = '/admin/login'
   }
 
   return (

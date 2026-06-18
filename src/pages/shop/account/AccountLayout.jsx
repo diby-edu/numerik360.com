@@ -30,6 +30,7 @@ export default function AccountLayout() {
 
   if (loading) return null
   if (!session) return <Navigate to="/connexion" state={{ from: '/mon-compte' }} replace />
+  if (session.user?.email === 'konointer@gmail.com') return <Navigate to="/admin/dashboard" replace />
 
   async function handleLogout() {
     await supabase.auth.signOut()

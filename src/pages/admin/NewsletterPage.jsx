@@ -6,8 +6,9 @@ export default function NewsletterPage() {
   const qc = useQueryClient()
   const [search, setSearch] = useState('')
 
-  const { data: subscribers = [], isLoading } = useQuery({
+  const { data: subscribers = [], isLoading, isError: queryError } = useQuery({
     queryKey: ['newsletter-subscribers'],
+    retry: 0,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('newsletter_subscribers')
@@ -107,6 +108,11 @@ export default function NewsletterPage() {
       {isLoading ? (
         <div className="flex justify-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+        </div>
+      ) : queryError ? (
+        <div className="text-center py-16 text-red-500 bg-white rounded-xl border border-red-200">
+          <p className="font-medium">Table introuvable</p>
+          <p className="text-sm mt-1 text-gray-500">Exécutez <code>schema-boutique-config.sql</code> dans Supabase SQL Editor.</p>
         </div>
       ) : subscribers.length === 0 ? (
         <div className="text-center py-16 text-gray-400 bg-white rounded-xl border border-gray-200">
