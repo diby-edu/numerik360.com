@@ -109,6 +109,7 @@ export default function ProductPage() {
   )
 
   const hasPromo = product.promo_price && product.promo_price < product.price
+  const hasRange = product.price_max && product.price_max > product.price
   const displayPrice = hasPromo ? product.promo_price : product.price
   const discount = hasPromo ? Math.round((1 - product.promo_price / product.price) * 100) : 0
 
@@ -247,16 +248,24 @@ export default function ProductPage() {
 
             {/* Prix */}
             <div className="flex items-baseline gap-3 mb-2">
-              <span className="text-3xl font-bold text-primary">{formatPrice(displayPrice)}</span>
-              {hasPromo && (
+              {hasRange ? (
+                <span className="text-3xl font-bold text-primary">
+                  {formatPrice(product.price)} – {formatPrice(product.price_max)}
+                </span>
+              ) : (
                 <>
-                  <span className="text-lg text-gray-400 line-through">{formatPrice(product.price)}</span>
-                  <span className="bg-red-100 text-red-600 text-sm font-bold px-2 py-0.5 rounded-full">-{discount}%</span>
+                  <span className="text-3xl font-bold text-primary">{formatPrice(displayPrice)}</span>
+                  {hasPromo && (
+                    <>
+                      <span className="text-lg text-gray-400 line-through">{formatPrice(product.price)}</span>
+                      <span className="bg-red-100 text-red-600 text-sm font-bold px-2 py-0.5 rounded-full">-{discount}%</span>
+                    </>
+                  )}
                 </>
               )}
             </div>
 
-            {hasPromo && (
+            {hasPromo && !hasRange && (
               <p className="text-sm text-red-600 font-medium mb-4">
                 Vous économisez {formatPrice(product.price - product.promo_price)}
               </p>

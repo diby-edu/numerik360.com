@@ -19,6 +19,7 @@ export default function ProductCard({ product }) {
     : null
 
   const hasPromo = product.promo_price && product.promo_price < product.price
+  const hasRange = product.price_max && product.price_max > product.price
   const outOfStock = product.stock === 0
   const showNew = !hasPromo && !outOfStock && isNew(product.created_at)
 
@@ -78,9 +79,17 @@ export default function ProductCard({ product }) {
 
         {/* Prix */}
         <div className="flex items-baseline gap-2 mb-3">
-          <span className="text-primary font-bold text-base">{formatPrice(displayPrice)}</span>
-          {hasPromo && (
-            <span className="text-gray-400 text-sm line-through">{formatPrice(product.price)}</span>
+          {hasRange ? (
+            <span className="text-primary font-bold text-base">
+              {formatPrice(product.price)} – {formatPrice(product.price_max)}
+            </span>
+          ) : (
+            <>
+              <span className="text-primary font-bold text-base">{formatPrice(displayPrice)}</span>
+              {hasPromo && (
+                <span className="text-gray-400 text-sm line-through">{formatPrice(product.price)}</span>
+              )}
+            </>
           )}
         </div>
 
