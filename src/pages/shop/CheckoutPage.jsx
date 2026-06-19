@@ -7,8 +7,9 @@ import useCartStore from '../../store/cartStore'
 import { useAuth } from '../../hooks/useAuth'
 
 async function fetchGuestCheckout() {
-  const { data } = await supabase.from('settings').select('value').eq('key', 'guest_checkout').single()
-  return data?.value === 'true'
+  const { data, error } = await supabase.from('settings').select('value').eq('key', 'guest_checkout').single()
+  if (error || !data) return true   // par défaut : invités autorisés
+  return data.value === 'true'
 }
 
 function formatPrice(amount) {
