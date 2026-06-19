@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import useCartStore from '../../store/cartStore'
+import useFavoritesStore from '../../store/favoritesStore'
 
 function formatPrice(amount) {
   return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF', maximumFractionDigits: 0 }).format(amount)
@@ -13,6 +14,8 @@ function isNew(createdAt) {
 
 export default function ProductCard({ product }) {
   const addItem = useCartStore(s => s.addItem)
+  const isFav = useFavoritesStore(s => s.ids.includes(product.id))
+  const toggleFav = useFavoritesStore(s => s.toggle)
 
   const imageUrl = product.images?.[0]
     ? supabase.storage.from('products').getPublicUrl(product.images[0]).data.publicUrl
@@ -30,6 +33,17 @@ export default function ProductCard({ product }) {
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300 group relative flex flex-col">
+
+      {/* Favori */}
+      <button
+        onClick={e => { e.preventDefault(); toggleFav(product.id) }}
+        className="absolute top-2 right-2 z-10 w-8 h-8 rounded-full bg-white shadow flex items-center justify-center transition-transform hover:scale-110"
+        aria-label={isFav ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+      >
+        <svg className="w-4 h-4" fill={isFav ? '#ef4444' : 'none'} stroke={isFav ? '#ef4444' : '#9ca3af'} viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+        </svg>
+      </button>
 
       {/* Badges */}
       <div className="absolute top-2 left-2 z-10 flex flex-col gap-1">

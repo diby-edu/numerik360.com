@@ -234,10 +234,13 @@ export default function CheckoutPage() {
                     placeholder="votre@email.com" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Adresse de livraison *</label>
-                  <textarea name="address" value={form.address} onChange={handleChange} required rows={3}
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Adresse / Lieu de livraison
+                    <span className="text-gray-400 font-normal ml-1">(optionnel pour services &amp; produits numériques)</span>
+                  </label>
+                  <textarea name="address" value={form.address} onChange={handleChange} rows={3}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"
-                    placeholder="Quartier, rue, repère..." />
+                    placeholder="Quartier, rue, repère... (laisser vide si non applicable)" />
                 </div>
               </form>
             </div>

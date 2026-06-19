@@ -20,7 +20,7 @@ export default function ShopPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const categorieSlug = searchParams.get('categorie') || ''
   const [page, setPage] = useState(1)
-  const [search, setSearch] = useState('')
+  const [search, setSearch] = useState(searchParams.get('q') || '')
   const [sort, setSort] = useState('newest')
 
   const { data: categories = [] } = useQuery({
