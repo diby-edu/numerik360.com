@@ -68,8 +68,10 @@ export default function ProductFormPage() {
 
   // ── Variantes PHYSIQUE ──
   const [attributes, setAttributes] = useState([])
-  // [{ name, values: ['S','M','L'] }]
+  // [{ name, values: ['S','M','L'] }]  — values = valeurs cochées pour ce produit
   const [physicalVariants, setPhysicalVariants] = useState([])
+  const [bulkPrice, setBulkPrice] = useState('')
+  const [bulkStock, setBulkStock] = useState('')
   // [{ id?, name, attributes: {}, price, stock }]
 
   // ── Numérique ──
@@ -84,6 +86,15 @@ export default function ProductFormPage() {
   const [descError, setDescError] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+
+  // Bibliothèque d'attributs
+  const { data: dbAttributes = [] } = useQuery({
+    queryKey: ['db-attributes'],
+    queryFn: async () => {
+      const { data } = await supabase.from('attributes').select('*').order('sort_order').order('name')
+      return data ?? []
+    },
+  })
 
   // Catégories
   const { data: categories = [] } = useQuery({
@@ -200,23 +211,20 @@ export default function ProductFormPage() {
 
   /* ── Handlers attributs PHYSIQUES ── */
   function addAttribute() {
-    setAttributes(prev => [...prev, { name: '', values: [''] }])
+    setAttributes(prev => [...prev, { name: '', values: [] }])
   }
   function updateAttributeName(idx, name) {
-    setAttributes(prev => prev.map((a, i) => i === idx ? { ...a, name } : a))
+    // Réinitialiser les valeurs cochées quand on change d'attribut
+    setAttributes(prev => prev.map((a, i) => i === idx ? { ...a, name, values: [] } : a))
   }
-  function addAttributeValue(attrIdx) {
-    setAttributes(prev => prev.map((a, i) => i === attrIdx ? { ...a, values: [...a.values, ''] } : a))
-  }
-  function updateAttributeValue(attrIdx, valIdx, value) {
-    setAttributes(prev => prev.map((a, i) =>
-      i === attrIdx ? { ...a, values: a.values.map((v, vi) => vi === valIdx ? value : v) } : a
-    ))
-  }
-  function removeAttributeValue(attrIdx, valIdx) {
-    setAttributes(prev => prev.map((a, i) =>
-      i === attrIdx ? { ...a, values: a.values.filter((_, vi) => vi !== valIdx) } : a
-    ))
+  function toggleAttributeValue(attrIdx, val) {
+    setAttributes(prev => prev.map((a, i) => {
+      if (i !== attrIdx) return a
+      const values = a.values.includes(val)
+        ? a.values.filter(v => v !== val)
+        : [...a.values, val]
+      return { ...a, values }
+    }))
   }
   function removeAttribute(idx) {
     setAttributes(prev => prev.filter((_, i) => i !== idx))
@@ -236,6 +244,14 @@ export default function ProductFormPage() {
 
   function updatePhysicalVariant(idx, field, value) {
     setPhysicalVariants(prev => prev.map((v, i) => i === idx ? { ...v, [field]: value } : v))
+  }
+
+  function applyBulkToAll() {
+    setPhysicalVariants(prev => prev.map(v => ({
+      ...v,
+      ...(bulkPrice !== '' ? { price: bulkPrice } : {}),
+      ...(bulkStock !== '' ? { stock: bulkStock } : {}),
+    })))
   }
 
   /* ── IA ── */
@@ -541,53 +557,79 @@ export default function ProductFormPage() {
 
             {/* Attributs */}
             <div className="space-y-3">
-              {attributes.map((attr, ai) => (
-                <div key={ai} className="bg-gray-50 rounded-xl p-3 space-y-2">
-                  <div className="flex gap-2 items-center">
-                    <input value={attr.name} onChange={e => updateAttributeName(ai, e.target.value)}
-                      placeholder="Nom de l'attribut (ex: Taille)"
-                      className="flex-1 border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary font-medium" />
-                    <button type="button" onClick={() => removeAttribute(ai)}
-                      className="text-red-400 hover:text-red-600">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
-                  </div>
-                  <div className="flex flex-wrap gap-2 pl-0">
-                    {attr.values.map((val, vi) => (
-                      <div key={vi} className="flex items-center gap-1">
-                        <input value={val} onChange={e => updateAttributeValue(ai, vi, e.target.value)}
-                          placeholder={`Valeur ${vi + 1}`}
-                          className="w-20 border border-gray-300 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-primary" />
-                        {attr.values.length > 1 && (
-                          <button type="button" onClick={() => removeAttributeValue(ai, vi)}
-                            className="text-gray-300 hover:text-red-400">
-                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                          </button>
-                        )}
+              {attributes.map((attr, ai) => {
+                const dbAttr = dbAttributes.find(d => d.name === attr.name)
+                const allValues = dbAttr?.values ?? []
+                return (
+                  <div key={ai} className="bg-gray-50 rounded-xl p-3 space-y-2.5">
+                    <div className="flex gap-2 items-center">
+                      <select
+                        value={attr.name}
+                        onChange={e => updateAttributeName(ai, e.target.value)}
+                        className="flex-1 border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary font-medium bg-white"
+                      >
+                        <option value="">-- Choisir un attribut --</option>
+                        {dbAttributes
+                          .filter(d => !attributes.some((a, i) => i !== ai && a.name === d.name))
+                          .map(d => (
+                            <option key={d.id} value={d.name}>{d.name}</option>
+                          ))
+                        }
+                      </select>
+                      <button type="button" onClick={() => removeAttribute(ai)}
+                        className="text-red-400 hover:text-red-600 flex-shrink-0">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                    {attr.name && allValues.length > 0 && (
+                      <div className="flex flex-wrap gap-2 pl-1">
+                        {allValues.map(val => {
+                          const checked = attr.values.includes(val)
+                          return (
+                            <button
+                              key={val}
+                              type="button"
+                              onClick={() => toggleAttributeValue(ai, val)}
+                              className={`px-3 py-1 rounded-full border text-xs font-medium transition-colors ${
+                                checked
+                                  ? 'bg-primary text-white border-primary'
+                                  : 'bg-white text-gray-600 border-gray-300 hover:border-primary hover:text-primary'
+                              }`}
+                            >
+                              {val}
+                            </button>
+                          )
+                        })}
                       </div>
-                    ))}
-                    <button type="button" onClick={() => addAttributeValue(ai)}
-                      className="text-xs text-primary font-medium hover:underline">
-                      + valeur
-                    </button>
+                    )}
+                    {attr.name && allValues.length === 0 && (
+                      <p className="text-xs text-orange-600 pl-1">
+                        Aucune valeur pour cet attribut. Ajoutez-en dans{' '}
+                        <a href="/admin/attributs" className="underline font-medium">Attributs</a>.
+                      </p>
+                    )}
+                    {!attr.name && (
+                      <p className="text-xs text-gray-400 pl-1">Sélectionnez un attribut dans la liste.</p>
+                    )}
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
 
             <div className="flex gap-2">
               <button type="button" onClick={addAttribute}
-                className="flex items-center gap-1.5 text-sm text-gray-600 font-medium border border-gray-300 rounded-lg px-3 py-1.5 hover:bg-gray-50 transition-colors">
+                disabled={dbAttributes.length === 0}
+                className="flex items-center gap-1.5 text-sm text-gray-600 font-medium border border-gray-300 rounded-lg px-3 py-1.5 hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                title={dbAttributes.length === 0 ? 'Créez d\'abord des attributs dans la section Attributs' : ''}
+              >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
                 Ajouter un attribut
               </button>
-              {attributes.length > 0 && (
+              {attributes.some(a => a.name && a.values.length > 0) && (
                 <button type="button" onClick={handleGenerateVariants}
                   className="flex items-center gap-1.5 text-sm text-white font-medium bg-primary rounded-lg px-3 py-1.5 hover:bg-blue-700 transition-colors">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -598,10 +640,48 @@ export default function ProductFormPage() {
               )}
             </div>
 
+            {/* Avertissement : attributs définis mais combinaisons non générées */}
+            {attributes.some(a => a.name && a.values.length > 0) && physicalVariants.length === 0 && (
+              <div className="flex items-start gap-2 bg-orange-50 border border-orange-200 rounded-lg px-3 py-2.5 text-sm text-orange-700">
+                <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                </svg>
+                Attributs sélectionnés mais combinaisons non générées — cliquez sur <strong className="mx-1">Générer les combinaisons</strong> pour créer les variantes.
+              </div>
+            )}
+
+            {dbAttributes.length === 0 && (
+              <p className="text-xs text-gray-400 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
+                Aucun attribut disponible. Créez d'abord vos attributs (Taille, Couleur...) dans{' '}
+                <a href="/admin/attributs" className="text-primary underline font-medium">Admin → Attributs</a>.
+              </p>
+            )}
+
             {/* Tableau des variantes générées */}
             {physicalVariants.length > 0 && (
               <div>
-                <p className="text-xs text-gray-500 mb-2">{physicalVariants.length} combinaison(s) — renseignez le prix et le stock pour chacune</p>
+                <p className="text-xs text-gray-500 mb-2">{physicalVariants.length} combinaison(s)</p>
+
+                {/* Appliquer à tous */}
+                <div className="flex flex-wrap gap-3 items-end bg-blue-50 border border-blue-200 rounded-xl p-3 mb-3">
+                  <div>
+                    <label className="block text-xs text-gray-600 mb-1">Prix pour toutes les variantes</label>
+                    <input type="number" value={bulkPrice} onChange={e => setBulkPrice(e.target.value)}
+                      min="0" placeholder="5000"
+                      className="w-28 border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white" />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-600 mb-1">Stock pour toutes</label>
+                    <input type="number" value={bulkStock} onChange={e => setBulkStock(e.target.value)}
+                      min="0" placeholder="10"
+                      className="w-20 border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white" />
+                  </div>
+                  <button type="button" onClick={applyBulkToAll}
+                    disabled={bulkPrice === '' && bulkStock === ''}
+                    className="flex items-center gap-1.5 bg-primary text-white text-sm font-medium px-4 py-1.5 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-40">
+                    Appliquer à tous
+                  </button>
+                </div>
                 <div className="overflow-x-auto rounded-xl border border-gray-200">
                   <table className="w-full text-sm">
                     <thead className="bg-gray-50">
@@ -737,27 +817,32 @@ export default function ProductFormPage() {
         <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-4">
           <h2 className="font-semibold text-gray-900">Prix & stock</h2>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Prix (FCFA) *
-                {autoPrice !== null && <span className="ml-1 text-xs text-blue-600 font-normal">— auto</span>}
-              </label>
-              <input type="number" name="price"
-                value={autoPrice !== null ? autoPrice : form.price}
-                onChange={handleChange}
-                disabled={autoPrice !== null}
-                required={autoPrice === null}
-                min="0" step="1"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary disabled:bg-gray-50 disabled:text-gray-400"
-                placeholder="5000" />
-              {autoPrice !== null && (
-                <p className="text-xs text-blue-600 mt-0.5">Calculé depuis vos formules/variantes</p>
-              )}
+          {/* Message auto-prix quand variantes ou formules existent */}
+          {(physicalVariants.length > 0 || serviceOptions.length > 0) && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 text-sm text-blue-700">
+              {autoPrice !== null
+                ? <>Prix affiché dans la boutique : <strong>{Number(autoPrice).toLocaleString('fr-FR')} FCFA</strong> — calculé automatiquement (prix minimum de vos variantes).</>
+                : 'Le prix sera calculé automatiquement depuis vos variantes. Renseignez au moins un prix dans le tableau ci-dessus.'}
             </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-4">
+            {/* Prix global : masqué si variantes physiques ou formules service */}
+            {physicalVariants.length === 0 && serviceOptions.length === 0 && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Prix (FCFA) *</label>
+                <input type="number" name="price"
+                  value={form.price}
+                  onChange={handleChange}
+                  required
+                  min="0" step="1"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  placeholder="5000" />
+              </div>
+            )}
 
             {/* Prix max : masqué si variantes */}
-            {!autoPrice && (
+            {physicalVariants.length === 0 && serviceOptions.length === 0 && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Prix max (FCFA)
@@ -774,7 +859,7 @@ export default function ProductFormPage() {
             )}
 
             {/* Promo : masqué si variantes */}
-            {!autoPrice && (
+            {physicalVariants.length === 0 && serviceOptions.length === 0 && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Prix promo (FCFA)

@@ -32,6 +32,7 @@ import ProductFormPage from './pages/admin/ProductFormPage'
 import OrdersPage from './pages/admin/OrdersPage'
 import CategoriesPage from './pages/admin/CategoriesPage'
 import SettingsPage from './pages/admin/SettingsPage'
+import AttributesPage from './pages/admin/AttributesPage'
 import TestimonialsPage from './pages/admin/TestimonialsPage'
 import NewsletterPage from './pages/admin/NewsletterPage'
 
@@ -101,6 +102,7 @@ export default function App() {
           <Route path="categories" element={<CategoriesPage />} />
           <Route path="temoignages" element={<TestimonialsPage />} />
           <Route path="newsletter" element={<NewsletterPage />} />
+          <Route path="attributs" element={<AttributesPage />} />
           <Route path="parametres" element={<SettingsPage />} />
         </Route>
 
