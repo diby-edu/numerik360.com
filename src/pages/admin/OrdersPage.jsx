@@ -242,6 +242,7 @@ export default function OrdersPage() {
                     <div key={i} className="flex items-center justify-between px-4 py-2 text-sm">
                       <div>
                         <p className="font-medium text-gray-900">{item.name}</p>
+                        {item.variant_name && <p className="text-xs text-blue-500">{item.variant_name}</p>}
                         <p className="text-xs text-gray-400">x{item.quantity}</p>
                       </div>
                       <p className="font-medium">{formatPrice(item.price * item.quantity)}</p>
