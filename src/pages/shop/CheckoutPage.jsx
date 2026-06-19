@@ -26,6 +26,9 @@ export default function CheckoutPage() {
   const [searchParams] = useSearchParams()
   const { items, getTotal, clearCart } = useCartStore()
   const total = getTotal()
+  const allNonPhysical = items.length > 0 && items.every(
+    ({ product }) => product.product_type === 'digital' || product.product_type === 'service'
+  )
   const { user, loading: authLoading } = useAuth()
   const [form, setForm] = useState({ name: '', email: '', phone: '', address: '' })
   const [paymentMethod, setPaymentMethod] = useState('delivery')
@@ -234,15 +237,22 @@ export default function CheckoutPage() {
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                     placeholder="votre@email.com" />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Adresse / Lieu de livraison
-                    <span className="text-gray-400 font-normal ml-1">(optionnel pour services &amp; produits numériques)</span>
-                  </label>
-                  <textarea name="address" value={form.address} onChange={handleChange} rows={3}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"
-                    placeholder="Quartier, rue, repère... (laisser vide si non applicable)" />
-                </div>
+                {allNonPhysical ? (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
+                    <p className="text-sm text-blue-700">
+                      <span className="font-medium">Produit numérique / service</span> — aucune adresse de livraison requise. Nous vous contacterons par téléphone ou email.
+                    </p>
+                  </div>
+                ) : (
+                  <div>
+                    <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
+                      Adresse de livraison *
+                    </label>
+                    <textarea id="address" name="address" value={form.address} onChange={handleChange} rows={3} required
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+                      placeholder="Quartier, rue, repère..." />
+                  </div>
+                )}
               </form>
             </div>
 

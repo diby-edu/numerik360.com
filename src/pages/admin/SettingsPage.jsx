@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
 import { THEMES } from '../../lib/themes'
@@ -29,7 +29,7 @@ function Toggle({ enabled, onChange }) {
   )
 }
 
-/* ── Miniature de prévisualisation du template ── */
+/* ── ThemeCard ── */
 function ThemeCard({ theme, isActive, onClick }) {
   const p = theme.preview
   return (
@@ -39,7 +39,6 @@ function ThemeCard({ theme, isActive, onClick }) {
         isActive ? 'border-blue-600 shadow-lg shadow-blue-200' : 'border-gray-200 hover:border-gray-400'
       }`}
     >
-      {/* Coche active */}
       {isActive && (
         <div className="absolute top-2 right-2 z-10 w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center shadow">
           <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -47,45 +46,21 @@ function ThemeCard({ theme, isActive, onClick }) {
           </svg>
         </div>
       )}
-
-      {/* Mini navbar */}
-      <div
-        className="flex items-center justify-between px-3 py-2"
-        style={{ background: p.navbar, borderBottom: `1px solid ${p.navbarBorder}` }}
-      >
+      <div className="flex items-center justify-between px-3 py-2" style={{ background: p.navbar, borderBottom: `1px solid ${p.navbarBorder}` }}>
         <div className="w-10 h-2 rounded" style={{ background: p.primary }} />
         <div className="flex gap-1">
           <div className="w-4 h-1.5 rounded-sm" style={{ background: p.navbarText, opacity: 0.4 }} />
           <div className="w-4 h-1.5 rounded-sm" style={{ background: p.navbarText, opacity: 0.4 }} />
         </div>
       </div>
-
-      {/* Mini hero */}
-      <div
-        className="flex flex-col items-center justify-center py-5 px-3 gap-2"
-        style={{ background: `linear-gradient(135deg, ${p.heroFrom}, ${p.heroTo})` }}
-      >
+      <div className="flex flex-col items-center justify-center py-5 px-3 gap-2" style={{ background: `linear-gradient(135deg, ${p.heroFrom}, ${p.heroTo})` }}>
         <div className="w-20 h-2 rounded bg-white opacity-90" />
         <div className="w-14 h-1.5 rounded bg-white opacity-60" />
-        <div
-          className="mt-1 px-3 py-1 rounded-lg text-xs font-bold"
-          style={{ background: p.primary === p.heroFrom ? 'white' : p.primary, color: p.heroFrom }}
-        >
-          CTA
-        </div>
+        <div className="mt-1 px-3 py-1 rounded-lg text-xs font-bold" style={{ background: p.primary === p.heroFrom ? 'white' : p.primary, color: p.heroFrom }}>CTA</div>
       </div>
-
-      {/* Mini produits */}
-      <div
-        className="grid grid-cols-3 gap-1 p-2"
-        style={{ background: p.bg }}
-      >
+      <div className="grid grid-cols-3 gap-1 p-2" style={{ background: p.bg }}>
         {[1, 2, 3].map(i => (
-          <div
-            key={i}
-            className="rounded-lg overflow-hidden"
-            style={{ background: p.surface, border: `1px solid ${p.navbarBorder}` }}
-          >
+          <div key={i} className="rounded-lg overflow-hidden" style={{ background: p.surface, border: `1px solid ${p.navbarBorder}` }}>
             <div className="h-7" style={{ background: p.primary, opacity: 0.25 }} />
             <div className="p-1 space-y-0.5">
               <div className="h-1 rounded" style={{ background: p.text, opacity: 0.4 }} />
@@ -94,8 +69,6 @@ function ThemeCard({ theme, isActive, onClick }) {
           </div>
         ))}
       </div>
-
-      {/* Label */}
       <div className="px-3 py-2 bg-white border-t border-gray-100">
         <p className="font-semibold text-gray-900 text-sm">{theme.name}</p>
         <p className="text-xs text-gray-500">{theme.description}</p>
@@ -104,7 +77,7 @@ function ThemeCard({ theme, isActive, onClick }) {
   )
 }
 
-/* ── Mode hero card ── */
+/* ── HeroModeCard ── */
 function HeroModeCard({ mode, label, description, icon, isActive, onClick }) {
   return (
     <button
@@ -153,12 +126,40 @@ const HERO_MODES = [
   },
 ]
 
+/* ── Bouton Sauvegarder réutilisable ── */
+function SaveButton({ onClick, saving }) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={saving}
+      className="flex items-center gap-2 bg-blue-600 text-white px-5 py-2 rounded-lg font-semibold text-sm hover:bg-blue-700 disabled:opacity-60 transition-colors"
+    >
+      {saving ? (
+        <>
+          <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
+          Sauvegarde...
+        </>
+      ) : (
+        <>
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+          </svg>
+          Sauvegarder
+        </>
+      )}
+    </button>
+  )
+}
+
 /* ── Page principale ── */
 export default function SettingsPage() {
   const queryClient = useQueryClient()
+  const [local, setLocal] = useState({})
   const [saved, setSaved] = useState(false)
+  const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
   const [uploading, setUploading] = useState(false)
+  const initialized = useRef(false)
   const fileInputRef = useRef(null)
 
   const { data: settings = {}, isLoading } = useQuery({
@@ -166,9 +167,35 @@ export default function SettingsPage() {
     queryFn: fetchSettings,
   })
 
+  // Initialiser l'état local une seule fois après chargement
+  useEffect(() => {
+    if (!isLoading && !initialized.current) {
+      initialized.current = true
+      setLocal({ ...settings })
+    }
+  }, [isLoading, settings])
+
+  // Mutation uniquement pour les slides (sauvegarde immédiate)
   const mutation = useMutation({
     mutationFn: ({ key, value }) => saveSetting(key, value),
-    onSuccess: () => {
+  })
+
+  function setLocalKey(key, value) {
+    setLocal(prev => ({ ...prev, [key]: String(value) }))
+  }
+
+  // Sauvegarde immédiate pour les slides uniquement
+  function set(key, value) {
+    mutation.mutate({ key, value })
+    setLocal(prev => ({ ...prev, [key]: String(value) }))
+  }
+
+  async function handleSave() {
+    setSaving(true)
+    setSaveError('')
+    try {
+      const entries = Object.entries(local).filter(([, v]) => v != null)
+      await Promise.all(entries.map(([key, value]) => saveSetting(key, String(value))))
       queryClient.invalidateQueries({ queryKey: ['admin-settings'] })
       queryClient.invalidateQueries({ queryKey: ['active-theme'] })
       queryClient.invalidateQueries({ queryKey: ['hero-settings'] })
@@ -177,17 +204,13 @@ export default function SettingsPage() {
       queryClient.invalidateQueries({ queryKey: ['footer-settings'] })
       queryClient.invalidateQueries({ queryKey: ['whatsapp-number'] })
       queryClient.invalidateQueries({ queryKey: ['shop-name'] })
-      setSaveError('')
       setSaved(true)
-      setTimeout(() => setSaved(false), 2500)
-    },
-    onError: (err) => {
+      setTimeout(() => setSaved(false), 3000)
+    } catch (err) {
       setSaveError(err.message || 'Erreur lors de la sauvegarde')
-    },
-  })
-
-  function set(key, value) {
-    mutation.mutate({ key, value })
+    } finally {
+      setSaving(false)
+    }
   }
 
   async function uploadSlideImage(file) {
@@ -205,7 +228,7 @@ export default function SettingsPage() {
     setUploading(true)
     try {
       let current = []
-      try { current = JSON.parse(settings.hero_slides ?? '[]') } catch {}
+      try { current = JSON.parse(local.hero_slides ?? '[]') } catch {}
       const remaining = 5 - current.length
       const toUpload = files.slice(0, remaining)
       const urls = await Promise.all(toUpload.map(uploadSlideImage))
@@ -218,7 +241,7 @@ export default function SettingsPage() {
 
   function removeSlide(idx) {
     let slides = []
-    try { slides = JSON.parse(settings.hero_slides ?? '[]') } catch {}
+    try { slides = JSON.parse(local.hero_slides ?? '[]') } catch {}
     slides.splice(idx, 1)
     set('hero_slides', JSON.stringify(slides))
   }
@@ -232,37 +255,40 @@ export default function SettingsPage() {
   }
 
   let slides = []
-  try { slides = JSON.parse(settings.hero_slides ?? '[]') } catch {}
+  try { slides = JSON.parse(local.hero_slides ?? '[]') } catch {}
 
   return (
-    <div className="max-w-4xl space-y-8">
+    <div className="max-w-4xl space-y-8 pb-8">
 
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <h1 className="text-2xl font-bold text-gray-900">Paramètres</h1>
-        {saved && (
-          <span className="text-sm text-green-600 font-medium bg-green-50 px-3 py-1 rounded-full border border-green-200">
-            ✓ Sauvegardé
-          </span>
-        )}
-        {saveError && (
-          <span className="text-sm text-red-600 font-medium bg-red-50 px-3 py-1 rounded-full border border-red-200">
-            ✗ {saveError}
-          </span>
-        )}
+        <div className="flex items-center gap-3">
+          {saved && (
+            <span className="text-sm text-green-600 font-medium bg-green-50 px-3 py-1 rounded-full border border-green-200">
+              ✓ Sauvegardé
+            </span>
+          )}
+          {saveError && (
+            <span className="text-sm text-red-600 font-medium bg-red-50 px-3 py-1.5 rounded-lg border border-red-200">
+              ✗ {saveError}
+            </span>
+          )}
+          <SaveButton onClick={handleSave} saving={saving} />
+        </div>
       </div>
 
       {/* ═══ SECTION : APPARENCE ═══ */}
       <section>
         <h2 className="text-lg font-bold text-gray-900 mb-1">Apparence — Template</h2>
-        <p className="text-sm text-gray-500 mb-4">Choisissez le thème visuel de votre boutique. Les modifications sont immédiates.</p>
+        <p className="text-sm text-gray-500 mb-4">Choisissez le thème visuel de votre boutique. Cliquez sur Sauvegarder pour appliquer.</p>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {THEMES.map(theme => (
             <ThemeCard
               key={theme.id}
               theme={theme}
-              isActive={settings.active_theme === theme.id}
-              onClick={() => set('active_theme', theme.id)}
+              isActive={local.active_theme === theme.id}
+              onClick={() => setLocalKey('active_theme', theme.id)}
             />
           ))}
         </div>
@@ -281,8 +307,8 @@ export default function SettingsPage() {
             <label className="block text-sm font-medium text-gray-700 mb-1">Titre</label>
             <input
               type="text"
-              defaultValue={settings.hero_title ?? ''}
-              onBlur={e => set('hero_title', e.target.value)}
+              value={local.hero_title ?? ''}
+              onChange={e => setLocalKey('hero_title', e.target.value)}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Bienvenue sur notre boutique"
             />
@@ -291,8 +317,8 @@ export default function SettingsPage() {
             <label className="block text-sm font-medium text-gray-700 mb-1">Sous-titre</label>
             <input
               type="text"
-              defaultValue={settings.hero_subtitle ?? ''}
-              onBlur={e => set('hero_subtitle', e.target.value)}
+              value={local.hero_subtitle ?? ''}
+              onChange={e => setLocalKey('hero_subtitle', e.target.value)}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Votre sous-titre..."
             />
@@ -307,22 +333,22 @@ export default function SettingsPage() {
               <HeroModeCard
                 key={mode.id}
                 {...mode}
-                isActive={settings.hero_mode === mode.id}
-                onClick={() => set('hero_mode', mode.id)}
+                isActive={local.hero_mode === mode.id}
+                onClick={() => setLocalKey('hero_mode', mode.id)}
               />
             ))}
           </div>
         </div>
 
         {/* Config vidéo */}
-        {settings.hero_mode === 'video' && (
+        {local.hero_mode === 'video' && (
           <div className="border-t border-gray-100 pt-5">
             <label className="block text-sm font-medium text-gray-700 mb-1">URL de la vidéo</label>
             <p className="text-xs text-gray-400 mb-2">Lien direct vers un fichier vidéo .mp4 (ex : depuis Supabase Storage, Cloudinary, etc.)</p>
             <input
               type="url"
-              defaultValue={settings.hero_video_url ?? ''}
-              onBlur={e => set('hero_video_url', e.target.value)}
+              value={local.hero_video_url ?? ''}
+              onChange={e => setLocalKey('hero_video_url', e.target.value)}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="https://example.com/video.mp4"
             />
@@ -330,7 +356,7 @@ export default function SettingsPage() {
         )}
 
         {/* Config slider */}
-        {settings.hero_mode === 'slider' && (
+        {local.hero_mode === 'slider' && (
           <div className="border-t border-gray-100 pt-5">
             <div className="flex items-center justify-between mb-3">
               <div>
@@ -353,14 +379,7 @@ export default function SettingsPage() {
                   Ajouter
                 </button>
               )}
-              <input
-                ref={fileInputRef}
-                type="file"
-                multiple
-                accept="image/*"
-                className="hidden"
-                onChange={handleSlideUpload}
-              />
+              <input ref={fileInputRef} type="file" multiple accept="image/*" className="hidden" onChange={handleSlideUpload} />
             </div>
 
             {slides.length > 0 ? (
@@ -378,9 +397,7 @@ export default function SettingsPage() {
                         </svg>
                       </button>
                     </div>
-                    <span className="absolute top-1 left-1 bg-black/50 text-white text-xs px-1.5 py-0.5 rounded">
-                      {idx + 1}
-                    </span>
+                    <span className="absolute top-1 left-1 bg-black/50 text-white text-xs px-1.5 py-0.5 rounded">{idx + 1}</span>
                   </div>
                 ))}
               </div>
@@ -406,8 +423,8 @@ export default function SettingsPage() {
         <p className="text-sm text-gray-500 mb-4">Apparaît dans la navbar, le footer et les emails.</p>
         <input
           type="text"
-          defaultValue={settings.shop_name ?? 'Boutique'}
-          onBlur={e => set('shop_name', e.target.value)}
+          value={local.shop_name ?? ''}
+          onChange={e => setLocalKey('shop_name', e.target.value)}
           className="w-full max-w-sm border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           placeholder="Ex: Ma Boutique"
         />
@@ -423,19 +440,19 @@ export default function SettingsPage() {
         <div className="flex items-center justify-between">
           <p className="font-medium text-gray-900 text-sm">Activer la barre d'annonce</p>
           <Toggle
-            enabled={settings.announcement_enabled === 'true'}
-            onChange={v => set('announcement_enabled', v)}
+            enabled={local.announcement_enabled === 'true'}
+            onChange={v => setLocalKey('announcement_enabled', v)}
           />
         </div>
 
-        {settings.announcement_enabled === 'true' && (
+        {local.announcement_enabled === 'true' && (
           <>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Texte de l'annonce</label>
               <input
                 type="text"
-                defaultValue={settings.announcement_text ?? ''}
-                onBlur={e => set('announcement_text', e.target.value)}
+                value={local.announcement_text ?? ''}
+                onChange={e => setLocalKey('announcement_text', e.target.value)}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Livraison gratuite dès 50 000 FCFA ✦ Paiement sécurisé"
               />
@@ -445,11 +462,11 @@ export default function SettingsPage() {
               <div className="flex items-center gap-3">
                 <input
                   type="color"
-                  defaultValue={settings.announcement_bg ?? '#2563EB'}
-                  onBlur={e => set('announcement_bg', e.target.value)}
+                  value={local.announcement_bg ?? '#2563EB'}
+                  onChange={e => setLocalKey('announcement_bg', e.target.value)}
                   className="w-10 h-10 rounded-lg border border-gray-300 cursor-pointer p-0.5"
                 />
-                <span className="text-sm text-gray-500">{settings.announcement_bg ?? '#2563EB'}</span>
+                <span className="text-sm text-gray-500">{local.announcement_bg ?? '#2563EB'}</span>
               </div>
             </div>
           </>
@@ -467,8 +484,8 @@ export default function SettingsPage() {
             </p>
           </div>
           <Toggle
-            enabled={settings.guest_checkout === 'true'}
-            onChange={v => set('guest_checkout', v)}
+            enabled={local.guest_checkout === 'true'}
+            onChange={v => setLocalKey('guest_checkout', v)}
           />
         </div>
       </section>
@@ -485,8 +502,8 @@ export default function SettingsPage() {
             <label className="block text-sm font-medium text-gray-700 mb-1">Téléphone</label>
             <input
               type="tel"
-              defaultValue={settings.contact_phone ?? ''}
-              onBlur={e => set('contact_phone', e.target.value)}
+              value={local.contact_phone ?? ''}
+              onChange={e => setLocalKey('contact_phone', e.target.value)}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="+221 XX XXX XX XX"
             />
@@ -495,8 +512,8 @@ export default function SettingsPage() {
             <label className="block text-sm font-medium text-gray-700 mb-1">Email de contact</label>
             <input
               type="email"
-              defaultValue={settings.contact_email ?? ''}
-              onBlur={e => set('contact_email', e.target.value)}
+              value={local.contact_email ?? ''}
+              onChange={e => setLocalKey('contact_email', e.target.value)}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="contact@boutique.com"
             />
@@ -505,8 +522,8 @@ export default function SettingsPage() {
             <label className="block text-sm font-medium text-gray-700 mb-1">Adresse</label>
             <input
               type="text"
-              defaultValue={settings.contact_address ?? ''}
-              onBlur={e => set('contact_address', e.target.value)}
+              value={local.contact_address ?? ''}
+              onChange={e => setLocalKey('contact_address', e.target.value)}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Dakar, Sénégal"
             />
@@ -522,8 +539,8 @@ export default function SettingsPage() {
           </label>
           <input
             type="tel"
-            defaultValue={settings.whatsapp_number ?? ''}
-            onBlur={e => set('whatsapp_number', e.target.value)}
+            value={local.whatsapp_number ?? ''}
+            onChange={e => setLocalKey('whatsapp_number', e.target.value)}
             className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="+221XXXXXXXXX (avec indicatif pays)"
           />
@@ -537,8 +554,8 @@ export default function SettingsPage() {
               <label className="block text-xs text-gray-500 mb-1">Facebook (URL)</label>
               <input
                 type="url"
-                defaultValue={settings.social_facebook ?? ''}
-                onBlur={e => set('social_facebook', e.target.value)}
+                value={local.social_facebook ?? ''}
+                onChange={e => setLocalKey('social_facebook', e.target.value)}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="https://facebook.com/..."
               />
@@ -547,8 +564,8 @@ export default function SettingsPage() {
               <label className="block text-xs text-gray-500 mb-1">Instagram (URL)</label>
               <input
                 type="url"
-                defaultValue={settings.social_instagram ?? ''}
-                onBlur={e => set('social_instagram', e.target.value)}
+                value={local.social_instagram ?? ''}
+                onChange={e => setLocalKey('social_instagram', e.target.value)}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="https://instagram.com/..."
               />
@@ -557,8 +574,8 @@ export default function SettingsPage() {
               <label className="block text-xs text-gray-500 mb-1">Twitter / X (URL)</label>
               <input
                 type="url"
-                defaultValue={settings.social_twitter ?? ''}
-                onBlur={e => set('social_twitter', e.target.value)}
+                value={local.social_twitter ?? ''}
+                onChange={e => setLocalKey('social_twitter', e.target.value)}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="https://twitter.com/..."
               />
@@ -567,7 +584,10 @@ export default function SettingsPage() {
         </div>
       </section>
 
-      <p className="text-xs text-gray-400">Les modifications sont appliquées immédiatement sur la boutique.</p>
+      {/* Bouton bas de page */}
+      <div className="flex justify-end pt-2 pb-4">
+        <SaveButton onClick={handleSave} saving={saving} />
+      </div>
     </div>
   )
 }

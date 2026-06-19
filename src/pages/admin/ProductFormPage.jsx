@@ -27,6 +27,7 @@ export default function ProductFormPage() {
     promo_price: '',
     stock: '',
     category_id: '',
+    product_type: 'physical',
     is_active: true,
     seo_title: '',
     seo_description: '',
@@ -63,6 +64,7 @@ export default function ProductFormPage() {
         promo_price: data.promo_price != null ? String(data.promo_price) : '',
         stock: String(data.stock),
         category_id: data.category_id ?? '',
+        product_type: data.product_type ?? 'physical',
         is_active: data.is_active,
         seo_title: data.seo_title ?? '',
         seo_description: data.seo_description ?? '',
@@ -162,6 +164,7 @@ export default function ProductFormPage() {
         promo_price: form.promo_price !== '' ? parseFloat(form.promo_price) : null,
         stock: parseInt(form.stock, 10),
         category_id: form.category_id || null,
+        product_type: form.product_type,
         is_active: form.is_active,
         images: allImages,
         seo_title: form.seo_title.trim() || null,
@@ -258,6 +261,37 @@ export default function ProductFormPage() {
             {descError && (
               <p className="text-xs text-red-600 mt-1">{descError}</p>
             )}
+          </div>
+        </div>
+
+        {/* Type de produit */}
+        <div className="bg-white rounded-xl border border-gray-200 p-5">
+          <h2 className="font-semibold text-gray-900 mb-3">Type de produit *</h2>
+          <div className="grid grid-cols-3 gap-3">
+            {[
+              { value: 'physical', label: 'Physique', desc: 'Livraison requise', icon: '📦' },
+              { value: 'digital', label: 'Numérique', desc: 'Fichier / lien', icon: '💾' },
+              { value: 'service', label: 'Service', desc: 'Prestation', icon: '🛠️' },
+            ].map(t => (
+              <label
+                key={t.value}
+                className={`cursor-pointer border-2 rounded-xl p-3 text-center transition-all ${
+                  form.product_type === t.value ? 'border-primary bg-blue-50' : 'border-gray-200 hover:border-gray-300'
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="product_type"
+                  value={t.value}
+                  checked={form.product_type === t.value}
+                  onChange={handleChange}
+                  className="sr-only"
+                />
+                <div className="text-xl mb-1">{t.icon}</div>
+                <p className={`text-sm font-semibold ${form.product_type === t.value ? 'text-primary' : 'text-gray-700'}`}>{t.label}</p>
+                <p className="text-xs text-gray-400 mt-0.5">{t.desc}</p>
+              </label>
+            ))}
           </div>
         </div>
 
