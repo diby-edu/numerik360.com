@@ -123,10 +123,12 @@ export default function CheckoutPage() {
     setLoading(true)
 
     try {
-      const orderItems = items.map(({ product, quantity }) => ({
+      const orderItems = items.map(({ product, quantity, variant }) => ({
         id: product.id,
         name: product.name,
-        price: product.promo_price && product.promo_price < product.price ? product.promo_price : product.price,
+        variant_id: variant?.id ?? null,
+        variant_name: variant?.name ?? null,
+        price: variant?.price ?? (product.promo_price && product.promo_price < product.price ? product.promo_price : product.price),
         quantity,
       }))
 
@@ -288,12 +290,18 @@ export default function CheckoutPage() {
             <div className="bg-white rounded-xl border border-gray-200 p-5 sticky top-20">
               <h2 className="font-semibold text-gray-900 mb-4">Récapitulatif</h2>
               <div className="space-y-3 mb-4">
-                {items.map(({ product, quantity }) => {
-                  const price = product.promo_price && product.promo_price < product.price ? product.promo_price : product.price
+                {items.map(({ product, quantity, variant }) => {
+                  const price = variant?.price ?? (product.promo_price && product.promo_price < product.price ? product.promo_price : product.price)
+                  const key = `${product.id}-${variant?.id ?? 'base'}`
                   return (
-                    <div key={product.id} className="flex justify-between text-sm">
-                      <span className="text-gray-600 flex-1 pr-2 line-clamp-1">{product.name} × {quantity}</span>
-                      <span className="font-medium text-gray-900 flex-shrink-0">{formatPrice(price * quantity)}</span>
+                    <div key={key} className="text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 flex-1 pr-2 line-clamp-1">{product.name} × {quantity}</span>
+                        <span className="font-medium text-gray-900 flex-shrink-0">{formatPrice(price * quantity)}</span>
+                      </div>
+                      {variant && (
+                        <p className="text-xs text-gray-400 mt-0.5 pl-0">{variant.name}</p>
+                      )}
                     </div>
                   )
                 })}
