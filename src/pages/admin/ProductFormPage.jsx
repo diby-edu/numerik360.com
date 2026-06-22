@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
 import { generateProductDescription, generateProductSEO } from '../../lib/openai'
+import RichTextEditor from '../../components/admin/RichTextEditor'
 
 function slugify(text) {
   return text
@@ -86,6 +87,7 @@ export default function ProductFormPage() {
   const [descError, setDescError] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [showPreview, setShowPreview] = useState(false)
 
   // Bibliothèque d'attributs
   const { data: dbAttributes = [] } = useQuery({
@@ -260,7 +262,9 @@ export default function ProductFormPage() {
     setGenerating(true); setDescError('')
     try {
       const desc = await generateProductDescription(form.name, form.name)
-      setForm(f => ({ ...f, description: desc }))
+      // Convertir texte brut en HTML (paragraphes)
+      const html = '<p>' + desc.split('\n').filter(l => l.trim()).join('</p><p>') + '</p>'
+      setForm(f => ({ ...f, description: html }))
     } catch (err) {
       setDescError(err.message || 'Erreur génération. Vérifiez la clé OpenAI sur le VPS.')
     } finally { setGenerating(false) }
@@ -453,9 +457,11 @@ export default function ProductFormPage() {
                 )}
               </button>
             </div>
-            <textarea name="description" value={form.description} onChange={handleChange} rows={4}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"
-              placeholder="Description du produit..." />
+            <RichTextEditor
+              value={form.description}
+              onChange={html => setForm(f => ({ ...f, description: html }))}
+              placeholder="Description du produit..."
+            />
             {descError && <p className="text-xs text-red-600 mt-1">{descError}</p>}
           </div>
         </div>
@@ -997,12 +1003,192 @@ export default function ProductFormPage() {
             className="flex-1 border border-gray-300 text-gray-700 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">
             Annuler
           </button>
+          <button type="button" onClick={() => setShowPreview(true)}
+            className="flex items-center gap-2 border border-gray-300 text-gray-700 px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>
+            Aperçu
+          </button>
           <button type="submit" disabled={saving}
             className="flex-1 bg-primary text-white py-2.5 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-60">
             {saving ? 'Enregistrement...' : isEdit ? 'Mettre à jour' : 'Créer le produit'}
           </button>
         </div>
       </form>
+
+      {/* ── MODALE APERÇU ── */}
+      {showPreview && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-start justify-center overflow-y-auto py-8 px-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl">
+            {/* Header modale */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+              <div>
+                <p className="text-xs text-gray-400 uppercase tracking-wide font-medium">Aperçu boutique</p>
+                <p className="text-sm text-gray-600 mt-0.5">Voici comment le client verra ce produit</p>
+              </div>
+              <button onClick={() => setShowPreview(false)}
+                className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100 transition-colors">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="grid md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-gray-100">
+              {/* Colonne image */}
+              <div className="p-6 flex flex-col items-center justify-center gap-4 bg-gray-50">
+                {existingImages.length > 0 || images.length > 0 ? (
+                  <div className="space-y-3 w-full">
+                    {existingImages[0] && (
+                      <img
+                        src={supabase.storage.from('products').getPublicUrl(existingImages[0]).data.publicUrl}
+                        alt={form.name}
+                        className="w-full h-56 object-cover rounded-xl"
+                      />
+                    )}
+                    {images[0] && !existingImages[0] && (
+                      <img src={URL.createObjectURL(images[0])} alt={form.name} className="w-full h-56 object-cover rounded-xl" />
+                    )}
+                    {(existingImages.length + images.length) > 1 && (
+                      <div className="flex gap-2 overflow-x-auto">
+                        {existingImages.slice(1).map((p, i) => (
+                          <img key={i} src={supabase.storage.from('products').getPublicUrl(p).data.publicUrl} alt="" className="w-16 h-16 object-cover rounded-lg flex-shrink-0" />
+                        ))}
+                        {images.slice(existingImages.length > 0 ? 0 : 1).map((f, i) => (
+                          <img key={i} src={URL.createObjectURL(f)} alt="" className="w-16 h-16 object-cover rounded-lg flex-shrink-0" />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="w-full h-56 rounded-xl bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
+                    <svg className="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                )}
+              </div>
+
+              {/* Colonne infos */}
+              <div className="p-6 space-y-4">
+                {/* Badge type */}
+                <span className={`inline-block text-xs font-bold px-2.5 py-0.5 rounded-full ${
+                  form.product_type === 'service' ? 'bg-purple-100 text-purple-700' :
+                  form.product_type === 'digital' ? 'bg-blue-100 text-blue-700' :
+                  'bg-green-100 text-green-700'
+                }`}>
+                  {form.product_type === 'service' ? '🛠️ Service' : form.product_type === 'digital' ? '💾 Numérique' : '📦 Physique'}
+                </span>
+
+                <h2 className="text-xl font-bold text-gray-900">{form.name || 'Nom du produit'}</h2>
+
+                {/* Prix */}
+                <div className="flex items-baseline gap-3">
+                  {autoPrice ? (
+                    <span className="text-2xl font-bold text-blue-600">
+                      À partir de {Number(autoPrice).toLocaleString('fr-FR')} FCFA
+                    </span>
+                  ) : form.price ? (
+                    <>
+                      <span className="text-2xl font-bold text-blue-600">
+                        {Number(form.promo_price || form.price).toLocaleString('fr-FR')} FCFA
+                      </span>
+                      {form.promo_price && (
+                        <span className="text-base text-gray-400 line-through">
+                          {Number(form.price).toLocaleString('fr-FR')} FCFA
+                        </span>
+                      )}
+                    </>
+                  ) : (
+                    <span className="text-gray-400 text-sm italic">Prix non défini</span>
+                  )}
+                </div>
+
+                {/* Description */}
+                {form.description && form.description !== '<p></p>' ? (
+                  <div
+                    className="prose prose-sm max-w-none text-gray-600 border-t border-gray-100 pt-4"
+                    dangerouslySetInnerHTML={{ __html: form.description }}
+                  />
+                ) : (
+                  <p className="text-sm text-gray-400 italic border-t border-gray-100 pt-4">Aucune description.</p>
+                )}
+
+                {/* Formules service */}
+                {form.product_type === 'service' && serviceOptions.length > 0 && (
+                  <div className="space-y-2 border-t border-gray-100 pt-4">
+                    <p className="text-sm font-semibold text-gray-800">Formules disponibles</p>
+                    {serviceOptions.filter(o => o.name).map((opt, i) => (
+                      <div key={i} className={`flex items-center justify-between p-3 rounded-xl border-2 ${i === 0 ? 'border-blue-600 bg-blue-50' : 'border-gray-200'}`}>
+                        <div>
+                          <p className="text-sm font-semibold text-gray-900">{opt.name}</p>
+                          {opt.description && <p className="text-xs text-gray-500">{opt.description}</p>}
+                        </div>
+                        {opt.price && <span className="font-bold text-blue-600 text-sm">{Number(opt.price).toLocaleString('fr-FR')} FCFA</span>}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Variantes physiques */}
+                {form.product_type === 'physical' && attributes.length > 0 && (
+                  <div className="space-y-3 border-t border-gray-100 pt-4">
+                    {attributes.filter(a => a.name && a.values.length > 0).map((attr, i) => (
+                      <div key={i}>
+                        <p className="text-sm font-semibold text-gray-800 mb-1.5">{attr.name}</p>
+                        <div className="flex flex-wrap gap-2">
+                          {attr.values.map((v, j) => (
+                            <span key={j} className={`px-3 py-1 rounded-lg border-2 text-sm font-medium ${j === 0 ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-gray-200 text-gray-700'}`}>{v}</span>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Numérique */}
+                {form.product_type === 'digital' && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-sm text-blue-700 flex items-start gap-2 border-t border-gray-100 mt-4 pt-4">
+                    <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                    {form.digital_delivery_type === 'file'
+                      ? 'Le fichier sera envoyé par email après confirmation du paiement.'
+                      : 'Un code de licence vous sera envoyé par email après paiement.'}
+                  </div>
+                )}
+
+                {/* Boutons d'action (décoratifs) */}
+                <div className="space-y-2 pt-2">
+                  {form.product_type === 'physical' && physicalVariants.length === 0 && (
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center border border-gray-300 rounded-xl overflow-hidden">
+                        <span className="px-3 py-2 text-gray-600 font-bold">−</span>
+                        <span className="px-4 py-2 text-sm font-semibold border-x border-gray-300">1</span>
+                        <span className="px-3 py-2 text-gray-600 font-bold">+</span>
+                      </div>
+                      <div className="flex-1 py-2.5 rounded-xl font-bold text-sm bg-white border-2 border-blue-600 text-blue-600 text-center">
+                        Panier
+                      </div>
+                    </div>
+                  )}
+                  <div className="w-full py-3 rounded-xl font-bold text-sm bg-blue-600 text-white text-center">
+                    {form.product_type === 'service' ? 'Commander cette formule' :
+                     form.product_type === 'digital' ? 'Acheter maintenant' :
+                     'Commander maintenant'}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 rounded-b-2xl">
+              <p className="text-xs text-gray-400 text-center">Ceci est un aperçu — l'apparence finale peut légèrement varier selon le thème choisi.</p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

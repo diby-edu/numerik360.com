@@ -327,7 +327,10 @@ export default function ProductPage() {
             )}
 
             {product.description && (
-              <p className="text-gray-600 text-sm leading-relaxed mb-6 border-t border-gray-100 pt-5">{product.description}</p>
+              <div
+                className="prose prose-sm max-w-none text-gray-600 mb-6 border-t border-gray-100 pt-5"
+                dangerouslySetInnerHTML={{ __html: product.description }}
+              />
             )}
 
             {/* ── SÉLECTEUR SERVICE ── */}
