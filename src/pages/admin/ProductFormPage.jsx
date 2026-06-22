@@ -529,10 +529,15 @@ export default function ProductFormPage() {
                         </svg>
                       </button>
                     </div>
-                    <div className="flex gap-2 pl-7">
-                      <input value={opt.description} onChange={e => updateServiceOption(idx, 'description', e.target.value)}
+                    <div className="pl-7 mb-2">
+                      <RichTextEditor
+                        value={opt.description}
+                        onChange={html => updateServiceOption(idx, 'description', html)}
                         placeholder="Description courte (optionnel)"
-                        className="flex-1 border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
+                      />
+                    </div>
+                    <div className="flex gap-2 pl-7">
+                      <div className="flex-1" />
                       <div className="relative flex-shrink-0 w-36">
                         <input type="number" value={opt.price} onChange={e => updateServiceOption(idx, 'price', e.target.value)}
                           placeholder="Prix*" min="0"
