@@ -333,46 +333,76 @@ export default function ProductPage() {
               />
             )}
 
-            {/* ── SÉLECTEUR SERVICE ── */}
+            {/* ── SÉLECTEUR SERVICE (onglets + description + barre prix) ── */}
             {product.product_type === 'service' && variants.length > 0 && (
               <div className="mb-5">
                 <p className="text-sm font-semibold text-gray-800 mb-3">Sélectionnez une formule</p>
-                <div className="space-y-2">
-                  {variants.map(v => (
-                    <button
-                      key={v.id}
-                      type="button"
-                      onClick={() => setSelectedVariant(v)}
-                      className={`w-full flex items-center justify-between gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all text-left ${
-                        selectedVariant?.id === v.id
-                          ? 'border-primary bg-blue-50'
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className={`w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center ${
-                          selectedVariant?.id === v.id ? 'border-primary' : 'border-gray-300'
-                        }`}>
-                          {selectedVariant?.id === v.id && (
-                            <div className="w-2 h-2 rounded-full bg-primary" />
-                          )}
-                        </div>
-                        <div>
-                          <p className="font-semibold text-gray-900 text-sm">{v.name}</p>
-                          {v.description && (
-                            <div
-                              className="text-xs text-gray-500 mt-0.5 prose prose-xs max-w-none [&_p]:m-0 [&_ul]:m-0 [&_li]:m-0"
-                              dangerouslySetInnerHTML={{ __html: v.description }}
-                            />
-                          )}
-                        </div>
+                <div className="rounded-xl border-2 border-gray-200 overflow-hidden">
+                  {/* Onglets */}
+                  <div className="flex border-b border-gray-100 overflow-x-auto">
+                    {variants.map(v => (
+                      <button
+                        key={v.id}
+                        type="button"
+                        onClick={() => setSelectedVariant(v)}
+                        className={`flex-1 min-w-[90px] py-3 px-3 text-center text-xs font-semibold whitespace-nowrap transition-all ${
+                          selectedVariant?.id === v.id
+                            ? 'text-primary bg-blue-50 border-b-2 border-primary'
+                            : 'text-gray-600 hover:bg-gray-50'
+                        }`}
+                      >
+                        {v.name}<br />
+                        <span className={`text-xs font-normal ${selectedVariant?.id === v.id ? 'text-blue-400' : 'text-gray-400'}`}>
+                          {formatPrice(v.price)}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                  {/* Panneau description */}
+                  {selectedVariant && (
+                    <>
+                      <div className="p-4">
+                        <p className="font-semibold text-gray-900 text-sm mb-1">{selectedVariant.name}</p>
+                        {selectedVariant.description && (
+                          <div
+                            className="prose prose-sm max-w-none text-gray-600 [&_p]:m-0 [&_ul]:mt-1 [&_ul]:mb-0 [&_li]:m-0"
+                            dangerouslySetInnerHTML={{ __html: selectedVariant.description }}
+                          />
+                        )}
                       </div>
-                      <span className={`font-bold flex-shrink-0 ${selectedVariant?.id === v.id ? 'text-primary' : 'text-gray-700'}`}>
-                        {formatPrice(v.price)}
-                      </span>
-                    </button>
-                  ))}
+                      {/* Barre prix + CTA */}
+                      <div className={`border-t border-gray-100 px-4 py-3 flex items-center justify-between gap-3 ${added ? 'bg-green-50' : 'bg-gray-50'}`}>
+                        <p className="text-lg font-black text-primary whitespace-nowrap">
+                          {formatPrice(selectedVariant.price)}
+                        </p>
+                        <button
+                          onClick={handleAddToCart}
+                          className={`px-5 py-2.5 rounded-xl font-bold text-sm transition-all whitespace-nowrap flex items-center gap-2 ${
+                            added
+                              ? 'bg-green-600 text-white scale-95'
+                              : 'bg-primary text-white hover:bg-primary-dark'
+                          }`}
+                        >
+                          {added ? (
+                            <>
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              </svg>
+                              Ajouté !
+                            </>
+                          ) : (
+                            `Commander ${selectedVariant.name} →`
+                          )}
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </div>
+                {added && (
+                  <Link to="/panier" className="block text-center mt-2 text-sm text-green-600 hover:text-green-700 font-medium">
+                    Voir le panier →
+                  </Link>
+                )}
               </div>
             )}
 
@@ -422,8 +452,8 @@ export default function ProductPage() {
               </div>
             )}
 
-            {/* ── AJOUT AU PANIER ── */}
-            {canAdd ? (
+            {/* ── AJOUT AU PANIER (physique / numérique uniquement) ── */}
+            {product.product_type !== 'service' && canAdd ? (
               <>
                 {/* Quantité : masquée pour les services */}
                 {product.product_type !== 'service' && (
@@ -458,19 +488,15 @@ export default function ProductPage() {
                   Voir le panier →
                 </Link>
               </>
-            ) : needsVariant ? (
+            ) : product.product_type !== 'service' && needsVariant ? (
               <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-center">
-                <p className="text-sm text-gray-500">
-                  {product.product_type === 'service'
-                    ? 'Sélectionnez une formule ci-dessus pour continuer.'
-                    : 'Sélectionnez toutes les options pour ajouter au panier.'}
-                </p>
+                <p className="text-sm text-gray-500">Sélectionnez toutes les options pour ajouter au panier.</p>
               </div>
-            ) : (
+            ) : product.product_type !== 'service' ? (
               <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-center">
                 <p className="text-sm text-red-600 font-medium">Rupture de stock</p>
               </div>
-            )}
+            ) : null}
 
             {/* Partage */}
             <div className="mt-6 pt-5 border-t border-gray-100">
