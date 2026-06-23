@@ -108,11 +108,12 @@ export default function ProductFormPage() {
     },
   })
 
-  // Chargement produit en édition
+  // Chargement produit + variantes en édition (fusionné pour éviter la race condition)
   useEffect(() => {
     if (!isEdit) return
     supabase.from('products').select('*').eq('id', id).single().then(({ data }) => {
       if (!data) return
+      const pt = data.product_type ?? 'physical'
       setForm({
         name: data.name,
         slug: data.slug,
@@ -122,7 +123,7 @@ export default function ProductFormPage() {
         promo_price: data.promo_price != null ? String(data.promo_price) : '',
         stock: String(data.stock),
         category_id: data.category_id ?? '',
-        product_type: data.product_type ?? 'physical',
+        product_type: pt,
         digital_delivery_type: data.digital_delivery_type ?? '',
         digital_file_path: data.digital_file_path ?? '',
         is_active: data.is_active,
@@ -130,41 +131,30 @@ export default function ProductFormPage() {
         seo_description: data.seo_description ?? '',
       })
       setExistingImages(data.images ?? [])
+
+      // Charger les variantes avec le product_type connu
+      supabase.from('product_variants').select('*').eq('product_id', id).order('sort_order').then(({ data: variants }) => {
+        if (!variants || variants.length === 0) return
+        if (pt === 'service') {
+          setServiceOptions(variants.map(v => ({
+            id: v.id, name: v.name, description: v.description ?? '', price: String(v.price),
+          })))
+        } else if (pt === 'physical') {
+          setPhysicalVariants(variants.map(v => ({
+            id: v.id, name: v.name, attributes: v.attributes ?? {}, price: String(v.price), stock: String(v.stock),
+          })))
+          const attrMap = {}
+          variants.forEach(v => {
+            Object.entries(v.attributes ?? {}).forEach(([key, val]) => {
+              if (!attrMap[key]) attrMap[key] = []
+              if (!attrMap[key].includes(val)) attrMap[key].push(val)
+            })
+          })
+          setAttributes(Object.entries(attrMap).map(([name, values]) => ({ name, values })))
+        }
+      })
     })
   }, [id, isEdit])
-
-  // Chargement variantes existantes en édition
-  const { data: existingVariants } = useQuery({
-    queryKey: ['product-variants-admin', id],
-    enabled: isEdit,
-    queryFn: async () => {
-      const { data } = await supabase.from('product_variants').select('*').eq('product_id', id).order('sort_order')
-      return data ?? []
-    },
-  })
-
-  useEffect(() => {
-    if (!existingVariants || !isEdit || existingVariants.length === 0) return
-    const pt = form.product_type
-    if (pt === 'service') {
-      setServiceOptions(existingVariants.map(v => ({
-        id: v.id, name: v.name, description: v.description ?? '', price: String(v.price),
-      })))
-    } else if (pt === 'physical') {
-      setPhysicalVariants(existingVariants.map(v => ({
-        id: v.id, name: v.name, attributes: v.attributes ?? {}, price: String(v.price), stock: String(v.stock),
-      })))
-      // Reconstruire les attributs depuis les variantes existantes
-      const attrMap = {}
-      existingVariants.forEach(v => {
-        Object.entries(v.attributes ?? {}).forEach(([key, val]) => {
-          if (!attrMap[key]) attrMap[key] = []
-          if (!attrMap[key].includes(val)) attrMap[key].push(val)
-        })
-      })
-      setAttributes(Object.entries(attrMap).map(([name, values]) => ({ name, values })))
-    }
-  }, [existingVariants, isEdit]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Codes numériques existants
   const { data: existingCodesCount = 0 } = useQuery({

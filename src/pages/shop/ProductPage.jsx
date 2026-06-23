@@ -359,7 +359,12 @@ export default function ProductPage() {
                         </div>
                         <div>
                           <p className="font-semibold text-gray-900 text-sm">{v.name}</p>
-                          {v.description && <p className="text-xs text-gray-500 mt-0.5">{v.description}</p>}
+                          {v.description && (
+                            <div
+                              className="text-xs text-gray-500 mt-0.5 prose prose-xs max-w-none [&_p]:m-0 [&_ul]:m-0 [&_li]:m-0"
+                              dangerouslySetInnerHTML={{ __html: v.description }}
+                            />
+                          )}
                         </div>
                       </div>
                       <span className={`font-bold flex-shrink-0 ${selectedVariant?.id === v.id ? 'text-primary' : 'text-gray-700'}`}>
