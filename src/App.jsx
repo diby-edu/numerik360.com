@@ -11,6 +11,7 @@ import ShopPage from './pages/shop/ShopPage'
 import ProductPage from './pages/shop/ProductPage'
 import CartPage from './pages/shop/CartPage'
 import CheckoutPage from './pages/shop/CheckoutPage'
+import ServiceRequestPage from './pages/shop/ServiceRequestPage'
 import OrderSuccessPage from './pages/shop/OrderSuccessPage'
 import LoginPage from './pages/shop/LoginPage'
 import RegisterPage from './pages/shop/RegisterPage'
@@ -66,6 +67,7 @@ export default function App() {
           <Route path="/produit/:slug" element={<ProductPage />} />
           <Route path="/panier" element={<CartPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/demande-service/:slug" element={<ServiceRequestPage />} />
           <Route path="/commande-confirmee" element={<OrderSuccessPage />} />
 
           {/* Auth client */}
