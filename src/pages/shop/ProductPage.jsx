@@ -237,12 +237,12 @@ export default function ProductPage() {
         <div className="grid md:grid-cols-2 gap-8">
           {/* Galerie */}
           <div>
-            <div className="aspect-square bg-gray-100 rounded-xl overflow-hidden mb-3 relative group cursor-zoom-in"
+            <div className="aspect-square bg-gray-50 rounded-xl overflow-hidden mb-3 relative group cursor-zoom-in"
               onClick={() => imageUrls.length > 0 && setLightbox(true)}>
               {imageUrls.length > 0 ? (
                 <>
                   <img src={imageUrls[activeImage]} alt={product.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                    className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300" />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
                     <svg className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />

@@ -66,12 +66,12 @@ export default function ProductCard({ product }) {
 
       {/* Image */}
       <Link to={`/produit/${product.slug}`} className="block">
-        <div className="aspect-square bg-gray-100 overflow-hidden">
+        <div className="aspect-square bg-gray-50 overflow-hidden">
           {imageUrl ? (
             <img
               src={imageUrl}
               alt={product.name}
-              className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ${outOfStock ? 'opacity-60' : ''}`}
+              className={`w-full h-full object-contain group-hover:scale-105 transition-transform duration-300 ${outOfStock ? 'opacity-60' : ''}`}
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-gray-300">
