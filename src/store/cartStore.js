@@ -94,17 +94,12 @@ const useCartStore = create(
         }
 
         const local = get().items
+        // Si on a déjà des items locaux (avec infos variantes), on les garde
+        // et on complète uniquement avec les items distants absents localement
         const remote = data.map(row => ({ product: row.product, quantity: row.quantity, variant: null }))
-        const merged = [...remote]
-        local.forEach(localItem => {
-          const key = itemKey(localItem.product.id, localItem.variant?.id)
-          const exists = merged.find(r => itemKey(r.product.id, r.variant?.id) === key)
-          if (exists) {
-            exists.quantity = Math.max(exists.quantity, localItem.quantity)
-          } else {
-            merged.push(localItem)
-          }
-        })
+        const localProductIds = new Set(local.map(i => i.product.id))
+        const remoteOnlyItems = remote.filter(r => !localProductIds.has(r.product.id))
+        const merged = [...local, ...remoteOnlyItems]
         set({ items: merged })
         get()._sync()
       },
