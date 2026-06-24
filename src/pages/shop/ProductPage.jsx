@@ -141,7 +141,7 @@ export default function ProductPage() {
 
   function handleOrderNow() {
     if (!canAdd) return
-    addItem(product, quantity, activeVariant)
+    if (!added) addItem(product, quantity, activeVariant)
     navigate('/panier')
   }
 
