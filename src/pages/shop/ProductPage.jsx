@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
 import Navbar from '../../components/shop/Navbar'
@@ -14,6 +14,7 @@ function formatPrice(amount) {
 
 export default function ProductPage() {
   const { slug } = useParams()
+  const navigate = useNavigate()
   const addItem = useCartStore(s => s.addItem)
   const [quantity, setQuantity] = useState(1)
   const [activeImage, setActiveImage] = useState(0)
@@ -136,6 +137,12 @@ export default function ProductPage() {
     addItem(product, quantity, activeVariant)
     setAdded(true)
     setTimeout(() => setAdded(false), 2000)
+  }
+
+  function handleOrderNow() {
+    if (!canAdd) return
+    addItem(product, quantity, activeVariant)
+    navigate('/panier')
   }
 
   const pageUrl = encodeURIComponent(typeof window !== 'undefined' ? window.location.href : '')
@@ -370,29 +377,46 @@ export default function ProductPage() {
                           />
                         )}
                       </div>
-                      {/* Barre prix + CTA */}
-                      <div className={`border-t border-gray-100 px-4 py-3 flex items-center justify-between gap-3 ${added ? 'bg-green-50' : 'bg-gray-50'}`}>
-                        <p className="text-lg font-black text-primary whitespace-nowrap">
-                          {formatPrice(selectedVariant.price)}
-                        </p>
+                      {/* Barre prix + CTA (Design 5) */}
+                      <div className="border-t border-blue-100 px-4 py-4" style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%)' }}>
+                        {/* Ligne 1 : prix + ajouter au panier */}
+                        <div className="flex items-center justify-between gap-3 mb-3">
+                          <div>
+                            <p className="text-xs text-blue-400 font-semibold mb-0.5">{selectedVariant.name}</p>
+                            <p className="text-xl font-black text-blue-700 whitespace-nowrap">{formatPrice(selectedVariant.price)}</p>
+                          </div>
+                          <button
+                            onClick={handleAddToCart}
+                            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm transition-all whitespace-nowrap flex-shrink-0 shadow-sm ${
+                              added
+                                ? 'bg-green-500 text-white border border-green-500'
+                                : 'bg-white border border-blue-200 text-blue-600 hover:bg-blue-50'
+                            }`}
+                          >
+                            {added ? (
+                              <>
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                                Ajouté !
+                              </>
+                            ) : (
+                              <>
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                                </svg>
+                                Ajouter au panier
+                              </>
+                            )}
+                          </button>
+                        </div>
+                        {/* Ligne 2 : commander pleine largeur */}
                         <button
-                          onClick={handleAddToCart}
-                          className={`px-5 py-2.5 rounded-xl font-bold text-sm transition-all whitespace-nowrap flex items-center gap-2 ${
-                            added
-                              ? 'bg-green-600 text-white scale-95'
-                              : 'bg-primary text-white hover:bg-primary-dark'
-                          }`}
+                          onClick={handleOrderNow}
+                          className="w-full py-3 rounded-xl font-bold text-sm text-white transition-all shadow-md hover:opacity-90"
+                          style={{ background: 'linear-gradient(135deg, #2563eb, #1d4ed8)' }}
                         >
-                          {added ? (
-                            <>
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                              </svg>
-                              Ajouté !
-                            </>
-                          ) : (
-                            `Commander ${selectedVariant.name} →`
-                          )}
+                          Commander {selectedVariant.name} →
                         </button>
                       </div>
                     </>
