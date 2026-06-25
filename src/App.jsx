@@ -18,6 +18,9 @@ import RegisterPage from './pages/shop/RegisterPage'
 import AboutPage from './pages/shop/AboutPage'
 import ContactPage from './pages/shop/ContactPage'
 import FavoritesPage from './pages/shop/FavoritesPage'
+import PrivacyPage from './pages/shop/PrivacyPage'
+import TermsPage from './pages/shop/TermsPage'
+import RgpdPage from './pages/shop/RgpdPage'
 
 // Espace client
 import AccountLayout from './pages/shop/account/AccountLayout'
@@ -76,6 +79,9 @@ export default function App() {
           <Route path="/a-propos" element={<AboutPage />} />
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/favoris" element={<FavoritesPage />} />
+          <Route path="/confidentialite" element={<PrivacyPage />} />
+          <Route path="/conditions" element={<TermsPage />} />
+          <Route path="/rgpd" element={<RgpdPage />} />
 
           {/* Espace client */}
           <Route path="/mon-compte" element={<AccountLayout />}>

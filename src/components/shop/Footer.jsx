@@ -20,7 +20,7 @@ export default function Footer() {
   return (
     <footer className="bg-gray-900 text-gray-300 mt-16">
       <div className="max-w-6xl mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-8">
 
           {/* Colonne 1 — Marque */}
           <div>
@@ -57,14 +57,13 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Colonne 2 — Navigation */}
+          {/* Colonne 2 — Entreprise */}
           <div>
-            <h3 className="text-white font-semibold mb-4">Navigation</h3>
+            <h3 className="text-white font-semibold mb-4">Entreprise</h3>
             <ul className="space-y-2 text-sm">
-              <li><Link to="/" className="hover:text-white transition-colors">Accueil</Link></li>
-              <li><Link to="/boutique" className="hover:text-white transition-colors">Catalogue</Link></li>
               <li><Link to="/a-propos" className="hover:text-white transition-colors">À propos</Link></li>
               <li><Link to="/contact" className="hover:text-white transition-colors">Contact</Link></li>
+              <li><Link to="/boutique" className="hover:text-white transition-colors">Catalogue</Link></li>
             </ul>
           </div>
 
@@ -79,7 +78,17 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Colonne 4 — Contact */}
+          {/* Colonne 4 — Légal */}
+          <div>
+            <h3 className="text-white font-semibold mb-4">Légal</h3>
+            <ul className="space-y-2 text-sm">
+              <li><Link to="/confidentialite" className="hover:text-white transition-colors">Confidentialité</Link></li>
+              <li><Link to="/conditions" className="hover:text-white transition-colors">Conditions</Link></li>
+              <li><Link to="/rgpd" className="hover:text-white transition-colors">RGPD</Link></li>
+            </ul>
+          </div>
+
+          {/* Colonne 5 — Contact */}
           <div>
             <h3 className="text-white font-semibold mb-4">Contact</h3>
             <ul className="space-y-3 text-sm">

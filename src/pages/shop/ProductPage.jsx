@@ -359,7 +359,7 @@ export default function ProductPage() {
                         }`}
                       >
                         {v.name}<br />
-                        <span className={`text-xs font-normal ${selectedVariant?.id === v.id ? 'text-blue-400' : 'text-gray-400'}`}>
+                        <span className={`text-xs font-bold ${selectedVariant?.id === v.id ? 'text-blue-600' : 'text-gray-500'}`}>
                           {formatPrice(v.price)}
                         </span>
                       </button>
