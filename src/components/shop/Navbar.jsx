@@ -89,7 +89,7 @@ export default function Navbar() {
           <Link to="/" className="text-xl font-bold text-primary z-10">{shopName}</Link>
 
           {/* Centre — Catégories (absolument centré) */}
-          <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-gray-600 absolute left-1/2 -translate-x-1/2">
+          <nav className="hidden md:flex items-center gap-5 text-sm font-medium text-gray-600 absolute left-1/2 -translate-x-1/2 whitespace-nowrap">
             {categories.map(cat => (
               <NavLink key={cat.id} to={`/boutique?categorie=${cat.slug}`} className={navLinkClass}>
                 {cat.name}
