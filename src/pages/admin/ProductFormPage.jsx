@@ -326,7 +326,7 @@ export default function ProductFormPage() {
         price: autoPrice ?? parseFloat(form.price),
         price_max: form.price_max !== '' && !hasVariants ? parseFloat(form.price_max) : null,
         promo_price: form.promo_price !== '' && !hasVariants ? parseFloat(form.promo_price) : null,
-        stock: form.product_type === 'digital' ? 999 : form.product_type === 'service' ? 999 : parseInt(form.stock, 10),
+        stock: form.product_type === 'service' ? 999 : parseInt(form.stock, 10) || 0,
         category_id: form.category_id || null,
         product_type: form.product_type,
         digital_delivery_type: form.product_type === 'digital' ? (form.digital_delivery_type || null) : null,
@@ -873,15 +873,20 @@ export default function ProductFormPage() {
               </div>
             )}
 
-            {/* Stock : uniquement physique sans variantes */}
-            {form.product_type === 'physical' && physicalVariants.length === 0 && (
+            {/* Stock : physique sans variantes, ou numérique */}
+            {(form.product_type === 'physical' && physicalVariants.length === 0) || form.product_type === 'digital' ? (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Stock *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Stock *
+                  {form.product_type === 'digital' && (
+                    <span className="text-gray-400 font-normal ml-1">(licences / exemplaires disponibles)</span>
+                  )}
+                </label>
                 <input type="number" name="stock" value={form.stock} onChange={handleChange} required min="0"
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                   placeholder="0" />
               </div>
-            )}
+            ) : null}
           </div>
 
           <div>
