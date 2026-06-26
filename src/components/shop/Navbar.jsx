@@ -84,13 +84,11 @@ export default function Navbar() {
             </form>
           </div>
         )}
-        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-          <Link to="/" className="text-xl font-bold text-primary">{shopName}</Link>
+        <div className="w-full px-6 h-16 flex items-center gap-8">
+          <Link to="/" className="text-xl font-bold text-primary flex-shrink-0">{shopName}</Link>
 
           {/* Desktop nav */}
-          <nav className="hidden md:flex items-center gap-5 text-sm font-medium text-gray-600">
-            <NavLink to="/" end className={navLinkClass}>Accueil</NavLink>
-            <NavLink to="/boutique" className={navLinkClass}>Catalogue</NavLink>
+          <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-gray-600 flex-1">
             {categories.map(cat => (
               <NavLink key={cat.id} to={`/boutique?categorie=${cat.slug}`} className={navLinkClass}>
                 {cat.name}
