@@ -84,11 +84,12 @@ export default function Navbar() {
             </form>
           </div>
         )}
-        <div className="w-full px-6 h-16 flex items-center gap-8">
-          <Link to="/" className="text-xl font-bold text-primary flex-shrink-0">{shopName}</Link>
+        <div className="w-full px-6 h-16 flex items-center relative">
+          {/* Gauche — Logo */}
+          <Link to="/" className="text-xl font-bold text-primary z-10">{shopName}</Link>
 
-          {/* Desktop nav */}
-          <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-gray-600 flex-1">
+          {/* Centre — Catégories (absolument centré) */}
+          <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-gray-600 absolute left-1/2 -translate-x-1/2">
             {categories.map(cat => (
               <NavLink key={cat.id} to={`/boutique?categorie=${cat.slug}`} className={navLinkClass}>
                 {cat.name}
@@ -96,7 +97,8 @@ export default function Navbar() {
             ))}
           </nav>
 
-          <div className="flex items-center gap-3">
+          {/* Droite — Icônes */}
+          <div className="flex items-center gap-3 ml-auto z-10">
             {/* Recherche */}
             <button
               onClick={() => setSearchOpen(o => !o)}
