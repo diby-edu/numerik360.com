@@ -23,7 +23,8 @@ export default function ProductCard({ product }) {
 
   const hasPromo = product.promo_price && product.promo_price < product.price
   const hasRange = product.price_max && product.price_max > product.price
-  const outOfStock = product.stock === 0
+  const isPhysical = product.product_type === 'physical' || !product.product_type
+  const outOfStock = isPhysical && product.stock === 0
   const showNew = !hasPromo && !outOfStock && isNew(product.created_at)
 
   const displayPrice = hasPromo ? product.promo_price : product.price

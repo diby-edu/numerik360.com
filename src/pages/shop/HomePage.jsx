@@ -12,47 +12,91 @@ function formatPrice(amount) {
   return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF', maximumFractionDigits: 0 }).format(amount)
 }
 
-/* ── Pourquoi nous choisir ── */
-const WHY_US = [
+const PAGE_SIZE = 10
+
+/* ── Univers métiers ── */
+const UNIVERS = [
   {
+    slug: 'developpement-web-mobile',
+    label: 'Développement & IA',
+    desc: 'Sites web, applications sur mesure et agents IA intelligents pour automatiser votre business.',
+    gradient: 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 50%, #3b82f6 100%)',
     icon: (
-      <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
+          d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
       </svg>
     ),
-    title: 'Livraison rapide',
-    desc: 'Recevez vos commandes en 24 à 48h directement à votre porte.',
+    services: ['Création de site web', "Application sur mesure", "Agent IA personnalisé"],
+    accent: '#93c5fd',
   },
   {
+    slug: 'logiciels-licences',
+    label: 'Logiciels & Licences',
+    desc: 'Licences Windows, Office, Adobe Creative Cloud livrées par email en moins de 24h.',
+    gradient: 'linear-gradient(135deg, #4c1d95 0%, #7c3aed 50%, #8b5cf6 100%)',
     icon: (
-      <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
+          d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" />
       </svg>
     ),
-    title: 'Paiement sécurisé',
-    desc: 'Transactions protégées. Paiement à la livraison disponible.',
+    services: ['Windows 10/11', 'Microsoft Office', 'Adobe Creative Cloud'],
+    accent: '#c4b5fd',
   },
   {
+    slug: 'import-commerce',
+    label: 'Import & Commerce',
+    desc: 'Sourcing Alibaba, import-export Chine–Afrique–France. Vos marchandises, sans frontières.',
+    gradient: 'linear-gradient(135deg, #92400e 0%, #d97706 50%, #f59e0b 100%)',
     icon: (
-      <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
+          d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
     ),
-    title: 'Qualité garantie',
-    desc: 'Produits sélectionnés avec soin. Satisfait ou remboursé.',
+    services: ['Sourcing Alibaba', 'Import Chine–Afrique', 'Logistique & dédouanement'],
+    accent: '#fcd34d',
   },
   {
+    slug: 'marketing-communication',
+    label: 'Marketing Digital',
+    desc: 'Réseaux sociaux, campagnes publicitaires, communication digitale pour booster votre visibilité.',
+    gradient: 'linear-gradient(135deg, #064e3b 0%, #059669 50%, #10b981 100%)',
     icon: (
-      <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
+      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
+          d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
+          d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
       </svg>
     ),
-    title: 'Support 7j/7',
-    desc: 'Notre équipe est disponible pour vous aider à tout moment.',
+    services: ['Gestion réseaux sociaux', 'Publicité Facebook/Instagram', 'Stratégie digitale'],
+    accent: '#6ee7b7',
   },
 ]
 
-const PAGE_SIZE = 10
+/* ── Étapes "Comment ça marche" ── */
+const STEPS = [
+  {
+    num: '01',
+    title: 'Choisissez votre offre',
+    desc: 'Parcourez nos services, logiciels et produits. Chaque offre dispose de formules adaptées à votre budget.',
+    color: '#2563eb',
+  },
+  {
+    num: '02',
+    title: 'Envoyez votre demande',
+    desc: 'Pour les services, remplissez notre formulaire en 2 minutes. Pour les licences, ajoutez au panier et payez en ligne.',
+    color: '#7c3aed',
+  },
+  {
+    num: '03',
+    title: 'On s\'occupe de tout',
+    desc: 'Notre équipe vous contacte sous 24h. Licences livrées par email, services démarrés après validation.',
+    color: '#059669',
+  },
+]
 
 export default function HomePage() {
   const [email, setEmail] = useState('')
@@ -87,40 +131,8 @@ export default function HomePage() {
         .eq('is_active', true)
         .not('promo_price', 'is', null)
         .order('created_at', { ascending: false })
-        .limit(4)
+        .limit(5)
       return data ?? []
-    },
-  })
-
-  const { data: testimonials = [] } = useQuery({
-    queryKey: ['testimonials-public'],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from('testimonials')
-        .select('*')
-        .eq('is_active', true)
-        .order('created_at', { ascending: false })
-        .limit(6)
-      return data ?? []
-    },
-  })
-
-  const subscribeMutation = useMutation({
-    mutationFn: async (email) => {
-      const { error } = await supabase.from('newsletter_subscribers').insert({ email })
-      if (error) throw error
-    },
-    onSuccess: () => {
-      setSubscribed(true)
-      setEmail('')
-      setSubError('')
-    },
-    onError: (err) => {
-      if (err.message?.includes('unique') || err.code === '23505') {
-        setSubError('Cet email est déjà inscrit.')
-      } else {
-        setSubError('Une erreur est survenue. Réessayez.')
-      }
     },
   })
 
@@ -135,6 +147,19 @@ export default function HomePage() {
     },
   })
 
+  const subscribeMutation = useMutation({
+    mutationFn: async (email) => {
+      const { error } = await supabase.from('newsletter_subscribers').insert({ email })
+      if (error) throw error
+    },
+    onSuccess: () => { setSubscribed(true); setEmail(''); setSubError('') },
+    onError: (err) => {
+      setSubError(err.message?.includes('unique') || err.code === '23505'
+        ? 'Cet email est déjà inscrit.'
+        : 'Une erreur est survenue. Réessayez.')
+    },
+  })
+
   function handleNewsletter(e) {
     e.preventDefault()
     setSubError('')
@@ -146,131 +171,253 @@ export default function HomePage() {
       <Navbar />
       <HeroSection />
 
+      {/* ══════════════════════════════════════
+          NOS UNIVERS
+      ══════════════════════════════════════ */}
+      <section className="py-20 px-4">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-14">
+            <p className="text-primary text-sm font-bold uppercase tracking-widest mb-3">Ce que nous faisons</p>
+            <h2 className="text-3xl md:text-4xl font-black text-gray-900 mb-4">4 expertises, 1 partenaire</h2>
+            <p className="text-gray-500 max-w-xl mx-auto">
+              Du digital au commerce international — des solutions concrètes pour entrepreneurs, PME et particuliers.
+            </p>
+          </div>
 
-      {/* ── Promotions ── */}
-      {promoProducts.length > 0 && (
-        <section className="max-w-6xl mx-auto px-4 py-8">
-          <div className="bg-gradient-to-r from-red-500 to-orange-500 rounded-2xl p-6 mb-6 flex items-center justify-between">
-            <div>
-              <p className="text-white/80 text-sm font-medium uppercase tracking-wide">Offres spéciales</p>
-              <h2 className="text-2xl font-black text-white">Promotions en cours 🔥</h2>
-            </div>
-            <Link to="/boutique" className="bg-white text-red-500 font-bold px-5 py-2.5 rounded-xl text-sm hover:bg-red-50 transition-colors flex-shrink-0">
-              Voir tout
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {UNIVERS.map((u) => (
+              <Link key={u.slug} to={`/boutique?categorie=${u.slug}`}
+                className="group relative rounded-2xl overflow-hidden flex flex-col min-h-[320px] hover:scale-[1.02] transition-transform duration-300 cursor-pointer">
+
+                {/* Fond gradient */}
+                <div className="absolute inset-0" style={{ background: u.gradient }} />
+
+                {/* Pattern décoratif */}
+                <div className="absolute inset-0 opacity-10"
+                  style={{
+                    backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)',
+                    backgroundSize: '28px 28px',
+                  }} />
+
+                {/* Blob lumineux */}
+                <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full blur-2xl opacity-30"
+                  style={{ background: u.accent }} />
+
+                <div className="relative z-10 p-7 flex flex-col h-full">
+                  {/* Icône */}
+                  <div className="w-14 h-14 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center text-white mb-5
+                    group-hover:bg-white/25 transition-colors">
+                    {u.icon}
+                  </div>
+
+                  {/* Titre */}
+                  <h3 className="text-white font-black text-xl mb-2">{u.label}</h3>
+                  <p className="text-white/75 text-sm leading-relaxed mb-5">{u.desc}</p>
+
+                  {/* Liste services */}
+                  <ul className="mt-auto space-y-1.5">
+                    {u.services.map((s, i) => (
+                      <li key={i} className="flex items-center gap-2 text-xs font-medium"
+                        style={{ color: u.accent }}>
+                        <span className="w-1.5 h-1.5 rounded-full bg-current flex-shrink-0" />
+                        {s}
+                      </li>
+                    ))}
+                  </ul>
+
+                  {/* Arrow */}
+                  <div className="mt-5 flex items-center gap-1 text-white/60 text-xs font-semibold group-hover:text-white group-hover:gap-2 transition-all">
+                    Voir les offres
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════
+          COMMENT ÇA MARCHE
+      ══════════════════════════════════════ */}
+      <section className="bg-gray-950 py-20 px-4">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-14">
+            <p className="text-blue-400 text-sm font-bold uppercase tracking-widest mb-3">Simple & rapide</p>
+            <h2 className="text-3xl md:text-4xl font-black text-white mb-4">Comment ça marche ?</h2>
+            <p className="text-gray-400 max-w-lg mx-auto">
+              En 3 étapes seulement, de votre besoin à la livraison.
+            </p>
+          </div>
+
+          <div className="relative grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Ligne de connexion */}
+            <div className="hidden md:block absolute top-10 left-[20%] right-[20%] h-px bg-gradient-to-r from-blue-500 via-purple-500 to-green-500 opacity-30" />
+
+            {STEPS.map((step, i) => (
+              <div key={i} className="relative text-center group">
+                {/* Numéro */}
+                <div className="w-20 h-20 rounded-2xl mx-auto mb-5 flex items-center justify-center font-black text-2xl text-white relative"
+                  style={{
+                    background: `${step.color}22`,
+                    border: `2px solid ${step.color}44`,
+                    color: step.color,
+                  }}>
+                  {step.num}
+                  <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity"
+                    style={{ boxShadow: `0 0 30px ${step.color}40` }} />
+                </div>
+                <h3 className="text-white font-bold text-lg mb-3">{step.title}</h3>
+                <p className="text-gray-400 text-sm leading-relaxed">{step.desc}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="text-center mt-14">
+            <Link to="/contact"
+              className="inline-flex items-center gap-2 bg-white text-gray-900 font-bold px-8 py-4 rounded-2xl hover:bg-gray-100 transition-colors text-sm">
+              Démarrer un projet
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
             </Link>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════
+          PROMOTIONS
+      ══════════════════════════════════════ */}
+      {promoProducts.length > 0 && (
+        <section className="max-w-7xl mx-auto px-4 py-14">
+          <div className="rounded-2xl p-6 mb-8 flex items-center justify-between"
+            style={{ background: 'linear-gradient(135deg, #ef4444, #f97316)' }}>
+            <div>
+              <p className="text-white/80 text-xs font-bold uppercase tracking-widest">Offres limitées</p>
+              <h2 className="text-2xl font-black text-white mt-1">Promotions en cours</h2>
+            </div>
+            <Link to="/boutique"
+              className="bg-white text-red-500 font-bold px-5 py-2.5 rounded-xl text-sm hover:bg-red-50 transition-colors flex-shrink-0">
+              Tout voir →
+            </Link>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
             {promoProducts.map(p => <ProductCard key={p.id} product={p} />)}
           </div>
         </section>
       )}
 
-      {/* ── Tous les produits ── */}
-      <section className="max-w-7xl mx-auto px-4 py-10">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">Nos produits</h2>
-          <Link to="/boutique" className="text-primary text-sm font-medium hover:underline">Voir tout →</Link>
+      {/* ══════════════════════════════════════
+          TOUS NOS PRODUITS
+      ══════════════════════════════════════ */}
+      <section className="max-w-7xl mx-auto px-4 py-14">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <p className="text-primary text-xs font-bold uppercase tracking-widest mb-1">Catalogue complet</p>
+            <h2 className="text-2xl font-black text-gray-900">Nos produits & services</h2>
+          </div>
+          <Link to="/boutique" className="text-primary text-sm font-semibold hover:underline flex items-center gap-1">
+            Voir tout
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </Link>
         </div>
+
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
           {allProducts.map(p => <ProductCard key={p.id} product={p} />)}
         </div>
 
-        {/* Pagination */}
         {totalPages > 1 && (
           <div className="flex items-center justify-center gap-2 mt-10">
-            <button
-              onClick={() => setPage(p => Math.max(1, p - 1))}
-              disabled={page === 1}
-              className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:border-primary hover:text-primary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-            >
+            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
+              className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:border-primary hover:text-primary disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
               ← Précédent
             </button>
             {Array.from({ length: totalPages }, (_, i) => i + 1).map(n => (
-              <button
-                key={n}
-                onClick={() => setPage(n)}
+              <button key={n} onClick={() => setPage(n)}
                 className={`w-9 h-9 rounded-lg text-sm font-semibold transition-colors ${
                   n === page ? 'bg-primary text-white' : 'border border-gray-200 text-gray-600 hover:border-primary hover:text-primary'
-                }`}
-              >
+                }`}>
                 {n}
               </button>
             ))}
-            <button
-              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-              disabled={page === totalPages}
-              className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:border-primary hover:text-primary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-            >
+            <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+              className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:border-primary hover:text-primary disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
               Suivant →
             </button>
           </div>
         )}
       </section>
 
-      {/* ── Pourquoi nous choisir ── */}
-      <section className="bg-white border-y border-gray-100 py-14 mt-8">
-        <div className="max-w-6xl mx-auto px-4">
-          <h2 className="text-2xl font-bold text-gray-900 text-center mb-10">Pourquoi nous choisir ?</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {WHY_US.map((item, i) => (
-              <div key={i} className="text-center group">
-                <div className="w-14 h-14 rounded-2xl bg-blue-50 text-primary flex items-center justify-center mx-auto mb-4 group-hover:bg-primary group-hover:text-white transition-colors">
-                  {item.icon}
-                </div>
-                <h3 className="font-bold text-gray-900 mb-2 text-sm">{item.title}</h3>
-                <p className="text-gray-500 text-xs leading-relaxed">{item.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Stats ── */}
-      <section className="max-w-6xl mx-auto px-4 py-14">
-        <div className="grid grid-cols-3 gap-6">
+      {/* ══════════════════════════════════════
+          STATS BAND
+      ══════════════════════════════════════ */}
+      <section className="py-16 px-4" style={{ background: 'linear-gradient(135deg, #eff6ff, #f0fdf4)' }}>
+        <div className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8">
           {[
-            { value: stats?.products ?? '...', label: 'Produits disponibles' },
-            { value: stats?.orders ?? '...', label: 'Commandes passées' },
-            { value: '100%', label: 'Clients satisfaits' },
-          ].map((stat, i) => (
+            { value: `${stats?.products ?? '…'}+`, label: 'Produits & services', icon: '📦' },
+            { value: `${stats?.orders ?? '…'}+`, label: 'Commandes traitées', icon: '✅' },
+            { value: '3',                          label: 'Pays couverts',       icon: '🌍' },
+            { value: '24h',                        label: 'Livraison numérique', icon: '⚡' },
+          ].map((s, i) => (
             <div key={i} className="text-center">
-              <p className="text-4xl font-black text-primary mb-1">{stat.value}+</p>
-              <p className="text-gray-500 text-sm">{stat.label}</p>
+              <div className="text-3xl mb-2">{s.icon}</div>
+              <p className="text-3xl font-black text-primary mb-1">{s.value}</p>
+              <p className="text-gray-500 text-sm">{s.label}</p>
             </div>
           ))}
         </div>
       </section>
 
-      {/* ── Témoignages ── */}
-      {testimonials.length > 0 && (
-        <section className="bg-gray-50 py-14">
-          <div className="max-w-6xl mx-auto px-4">
-            <h2 className="text-2xl font-bold text-gray-900 text-center mb-10">Ce que disent nos clients</h2>
-            <div className="grid md:grid-cols-3 gap-6">
-              {testimonials.map((t) => (
-                <div key={t.id} className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-                  <div className="flex gap-1 mb-4">
-                    {Array.from({ length: t.rating }).map((_, j) => (
-                      <svg key={j} className="w-4 h-4 text-yellow-400 fill-current" viewBox="0 0 20 20">
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                    ))}
-                  </div>
-                  <p className="text-gray-600 text-sm leading-relaxed mb-5 italic">"{t.text}"</p>
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm">
-                      {t.avatar}
-                    </div>
-                    <p className="font-semibold text-gray-900 text-sm">{t.name}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
+      {/* ══════════════════════════════════════
+          CTA FINAL
+      ══════════════════════════════════════ */}
+      <section className="relative overflow-hidden py-24 px-4"
+        style={{ background: 'linear-gradient(-45deg, #0f172a, #1e3a8a, #1d4ed8, #0f172a)', backgroundSize: '400% 400%', animation: 'gradient-shift 10s ease infinite' }}>
 
-      {/* ── Newsletter ── */}
+        {/* Blobs */}
+        <div className="absolute top-0 right-0 w-96 h-96 rounded-full blur-3xl opacity-20"
+          style={{ background: 'radial-gradient(circle, #7c3aed, transparent)' }} />
+        <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full blur-3xl opacity-15"
+          style={{ background: 'radial-gradient(circle, #0ea5e9, transparent)' }} />
+
+        <div className="max-w-3xl mx-auto text-center relative z-10">
+          <p className="text-blue-300 text-sm font-bold uppercase tracking-widest mb-4">Prêt à démarrer ?</p>
+          <h2 className="text-4xl md:text-5xl font-black text-white mb-6 leading-tight">
+            Votre projet commence
+            <span style={{
+              background: 'linear-gradient(90deg, #93c5fd, #c4b5fd)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+            }}> ici.</span>
+          </h2>
+          <p className="text-white/60 text-lg mb-10 max-w-xl mx-auto">
+            Que vous ayez besoin d'un site web, d'un agent IA, d'une licence logicielle ou d'un import depuis la Chine — nous avons la solution.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link to="/contact"
+              className="inline-flex items-center justify-center gap-2 bg-white text-blue-900 font-bold px-10 py-4 rounded-2xl text-lg hover:scale-105 transition-transform"
+              style={{ boxShadow: '0 0 40px rgba(255,255,255,0.2)' }}>
+              Nous contacter
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+            </Link>
+            <Link to="/boutique"
+              className="inline-flex items-center justify-center gap-2 border-2 border-white/30 text-white font-semibold px-10 py-4 rounded-2xl text-lg hover:bg-white/10 transition-colors">
+              Voir le catalogue
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════
+          NEWSLETTER
+      ══════════════════════════════════════ */}
       <section className="max-w-2xl mx-auto px-4 py-16 text-center">
         <h2 className="text-2xl font-bold text-gray-900 mb-2">Restez informé</h2>
         <p className="text-gray-500 mb-6 text-sm">Recevez nos offres exclusives et nouveautés directement dans votre boîte mail.</p>
@@ -289,11 +436,8 @@ export default function HomePage() {
                 placeholder="votre@email.com"
                 className={`flex-1 border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary ${subError ? 'border-red-400' : 'border-gray-300'}`}
               />
-              <button
-                type="submit"
-                disabled={subscribeMutation.isPending}
-                className="bg-primary text-white font-bold px-6 py-3 rounded-xl text-sm hover:bg-primary-dark transition-colors flex-shrink-0 disabled:opacity-60"
-              >
+              <button type="submit" disabled={subscribeMutation.isPending}
+                className="bg-primary text-white font-bold px-6 py-3 rounded-xl text-sm hover:bg-primary-dark transition-colors flex-shrink-0 disabled:opacity-60">
                 {subscribeMutation.isPending ? '...' : "S'inscrire"}
               </button>
             </form>
