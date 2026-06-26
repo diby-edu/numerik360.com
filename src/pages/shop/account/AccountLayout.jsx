@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { NavLink, Outlet, useNavigate, Navigate } from 'react-router-dom'
 import { supabase } from '../../../lib/supabase'
 import { useAuth } from '../../../hooks/useAuth'
@@ -27,10 +28,17 @@ const navItems = [
 export default function AccountLayout() {
   const navigate = useNavigate()
   const { session, loading } = useAuth()
+  const [isAdmin, setIsAdmin] = useState(null) // null = chargement
 
-  if (loading) return null
+  useEffect(() => {
+    if (!session) { setIsAdmin(false); return }
+    supabase.from('profiles').select('is_admin').eq('id', session.user.id).single()
+      .then(({ data }) => setIsAdmin(data?.is_admin ?? false))
+  }, [session])
+
+  if (loading || isAdmin === null) return null
   if (!session) return <Navigate to="/connexion" state={{ from: '/mon-compte' }} replace />
-  if (session.user?.email === 'konointer@gmail.com') return <Navigate to="/admin/dashboard" replace />
+  if (isAdmin) return <Navigate to="/admin/dashboard" replace />
 
   async function handleLogout() {
     await supabase.auth.signOut()

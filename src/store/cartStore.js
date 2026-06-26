@@ -74,6 +74,7 @@ const useCartStore = create(
             items.map(i => ({
               user_id: user.id,
               product_id: i.product.id,
+              variant_id: i.variant?.id ?? null,
               quantity: i.quantity,
             }))
           )
@@ -85,7 +86,7 @@ const useCartStore = create(
         if (!user) return
         const { data } = await supabase
           .from('cart_items')
-          .select('*, product:products(*)')
+          .select('*, product:products(*), variant:product_variants(*)')
           .eq('user_id', user.id)
 
         if (!data || data.length === 0) {
@@ -94,11 +95,10 @@ const useCartStore = create(
         }
 
         const local = get().items
-        // Si on a déjà des items locaux (avec infos variantes), on les garde
-        // et on complète uniquement avec les items distants absents localement
-        const remote = data.map(row => ({ product: row.product, quantity: row.quantity, variant: null }))
-        const localProductIds = new Set(local.map(i => i.product.id))
-        const remoteOnlyItems = remote.filter(r => !localProductIds.has(r.product.id))
+        const remote = data.map(row => ({ product: row.product, quantity: row.quantity, variant: row.variant ?? null }))
+        // Déduplication par clé composite productId__variantId
+        const localKeys = new Set(local.map(i => itemKey(i.product.id, i.variant?.id)))
+        const remoteOnlyItems = remote.filter(r => !localKeys.has(itemKey(r.product.id, r.variant?.id)))
         const merged = [...local, ...remoteOnlyItems]
         set({ items: merged })
         get()._sync()

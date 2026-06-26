@@ -353,4 +353,22 @@ app.post('/api/paydunya-webhook', async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: e.message }) }
 })
 
+app.post('/api/contact', async (req, res) => {
+  const { name, email, subject, message } = req.body
+  try {
+    const adminEmail = process.env.ADMIN_EMAIL || process.env.SMTP_USER
+    await sendMail(
+      adminEmail,
+      `[Contact] ${subject || 'Message depuis le site'}`,
+      `<p><strong>Nom :</strong> ${name}</p>
+       <p><strong>Email :</strong> <a href="mailto:${email}">${email}</a></p>
+       <p><strong>Message :</strong><br>${message.replace(/\n/g, '<br>')}</p>`
+    )
+    res.json({ ok: true })
+  } catch (e) {
+    console.error('contact mail error', e)
+    res.status(500).json({ error: e.message })
+  }
+})
+
 app.listen(3005, () => console.log('API numerik360 port 3005'))

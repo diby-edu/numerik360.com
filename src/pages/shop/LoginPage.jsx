@@ -21,8 +21,12 @@ export default function LoginPage() {
     if (error) {
       setError('Email ou mot de passe incorrect.')
     } else {
-      const userEmail = data.user?.email
-      if (userEmail === 'konointer@gmail.com') {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('is_admin')
+        .eq('id', data.user.id)
+        .single()
+      if (profile?.is_admin) {
         navigate('/admin/dashboard', { replace: true })
       } else {
         navigate(from, { replace: true })

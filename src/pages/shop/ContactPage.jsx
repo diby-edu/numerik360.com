@@ -14,6 +14,8 @@ async function fetchContactSettings() {
 export default function ContactPage() {
   const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' })
   const [sent, setSent] = useState(false)
+  const [sending, setSending] = useState(false)
+  const [sendError, setSendError] = useState('')
 
   const { data: s = {} } = useQuery({
     queryKey: ['contact-settings'],
@@ -25,15 +27,31 @@ export default function ContactPage() {
     setForm(f => ({ ...f, [e.target.name]: e.target.value }))
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault()
-    // Mailto fallback — no backend email service configured yet
-    const body = encodeURIComponent(`Nom: ${form.name}\nEmail: ${form.email}\n\n${form.message}`)
-    const subject = encodeURIComponent(form.subject || 'Message depuis le site')
-    const mailto = `mailto:${s.contact_email || ''}?subject=${subject}&body=${body}`
-    window.open(mailto)
-    setSent(true)
-    setForm({ name: '', email: '', subject: '', message: '' })
+    setSending(true)
+    setSendError('')
+    try {
+      const { error } = await supabase.from('contact_messages').insert({
+        name: form.name,
+        email: form.email,
+        subject: form.subject || null,
+        message: form.message,
+      })
+      if (error) throw error
+      // Notif email admin via VPS (non-bloquant)
+      fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      }).catch(() => {})
+      setSent(true)
+      setForm({ name: '', email: '', subject: '', message: '' })
+    } catch {
+      setSendError('Une erreur est survenue. Veuillez réessayer.')
+    } finally {
+      setSending(false)
+    }
   }
 
   const cleanWa = (s.whatsapp_number || '').replace(/\D/g, '')
@@ -190,14 +208,18 @@ export default function ContactPage() {
                   className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"
                 />
               </div>
+              {sendError && (
+                <p className="text-sm text-red-600">{sendError}</p>
+              )}
               <button
                 type="submit"
-                className="w-full bg-primary text-white font-bold py-3 rounded-xl hover:bg-primary-dark transition-colors flex items-center justify-center gap-2"
+                disabled={sending}
+                className="w-full bg-primary text-white font-bold py-3 rounded-xl hover:bg-primary-dark transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                 </svg>
-                Envoyer le message
+                {sending ? 'Envoi en cours...' : 'Envoyer le message'}
               </button>
             </form>
           )}
