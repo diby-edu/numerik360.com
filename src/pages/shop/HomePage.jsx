@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useMutation } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
 import Navbar from '../../components/shop/Navbar'
 import Footer from '../../components/shop/Footer'
@@ -52,32 +52,31 @@ const WHY_US = [
   },
 ]
 
+const PAGE_SIZE = 10
+
 export default function HomePage() {
-  const qc = useQueryClient()
   const [email, setEmail] = useState('')
   const [subscribed, setSubscribed] = useState(false)
   const [subError, setSubError] = useState('')
+  const [page, setPage] = useState(1)
 
-  const { data: categories = [] } = useQuery({
-    queryKey: ['categories-public'],
+  const { data: allProductsData } = useQuery({
+    queryKey: ['products-all', page],
     queryFn: async () => {
-      const { data } = await supabase.from('categories').select('*').order('name')
-      return data ?? []
-    },
-  })
-
-  const { data: newProducts = [] } = useQuery({
-    queryKey: ['products-new'],
-    queryFn: async () => {
-      const { data } = await supabase
+      const from = (page - 1) * PAGE_SIZE
+      const to = from + PAGE_SIZE - 1
+      const { data, count } = await supabase
         .from('products')
-        .select('*')
+        .select('*', { count: 'exact' })
         .eq('is_active', true)
         .order('created_at', { ascending: false })
-        .limit(8)
-      return data ?? []
+        .range(from, to)
+      return { products: data ?? [], total: count ?? 0 }
     },
   })
+
+  const allProducts = allProductsData?.products ?? []
+  const totalPages = Math.ceil((allProductsData?.total ?? 0) / PAGE_SIZE)
 
   const { data: promoProducts = [] } = useQuery({
     queryKey: ['products-promo'],
@@ -147,26 +146,6 @@ export default function HomePage() {
       <Navbar />
       <HeroSection />
 
-      {/* ── Catégories ── */}
-      {categories.length > 0 && (
-        <section className="max-w-6xl mx-auto px-4 py-12">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">Catégories</h2>
-            <Link to="/boutique" className="text-primary text-sm font-medium hover:underline">Voir tout →</Link>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-            {categories.map(cat => (
-              <Link
-                key={cat.id}
-                to={`/boutique?categorie=${cat.slug}`}
-                className="bg-white border border-gray-200 rounded-xl px-4 py-5 text-center font-medium text-gray-700 hover:border-primary hover:text-primary transition-colors hover:shadow-sm"
-              >
-                {cat.name}
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
 
       {/* ── Promotions ── */}
       {promoProducts.length > 0 && (
@@ -186,18 +165,47 @@ export default function HomePage() {
         </section>
       )}
 
-      {/* ── Nouveautés ── */}
-      {newProducts.length > 0 && (
-        <section className="max-w-6xl mx-auto px-4 py-8">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">Nouveautés</h2>
-            <Link to="/boutique" className="text-primary text-sm font-medium hover:underline">Voir tout →</Link>
+      {/* ── Tous les produits ── */}
+      <section className="max-w-7xl mx-auto px-4 py-10">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold text-gray-900">Nos produits</h2>
+          <Link to="/boutique" className="text-primary text-sm font-medium hover:underline">Voir tout →</Link>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+          {allProducts.map(p => <ProductCard key={p.id} product={p} />)}
+        </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-2 mt-10">
+            <button
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:border-primary hover:text-primary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              ← Précédent
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(n => (
+              <button
+                key={n}
+                onClick={() => setPage(n)}
+                className={`w-9 h-9 rounded-lg text-sm font-semibold transition-colors ${
+                  n === page ? 'bg-primary text-white' : 'border border-gray-200 text-gray-600 hover:border-primary hover:text-primary'
+                }`}
+              >
+                {n}
+              </button>
+            ))}
+            <button
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:border-primary hover:text-primary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              Suivant →
+            </button>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            {newProducts.map(p => <ProductCard key={p.id} product={p} />)}
-          </div>
-        </section>
-      )}
+        )}
+      </section>
 
       {/* ── Pourquoi nous choisir ── */}
       <section className="bg-white border-y border-gray-100 py-14 mt-8">

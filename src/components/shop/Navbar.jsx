@@ -39,6 +39,15 @@ export default function Navbar() {
     staleTime: 60000,
   })
 
+  const { data: categories = [] } = useQuery({
+    queryKey: ['categories-nav'],
+    queryFn: async () => {
+      const { data } = await supabase.from('categories').select('id,name,slug').order('name')
+      return data ?? []
+    },
+    staleTime: 300000,
+  })
+
   const navLinkClass = ({ isActive }) =>
     `hover:text-gray-900 transition-colors ${isActive ? 'text-primary font-semibold' : ''}`
 
@@ -79,11 +88,14 @@ export default function Navbar() {
           <Link to="/" className="text-xl font-bold text-primary">{shopName}</Link>
 
           {/* Desktop nav */}
-          <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-gray-600">
+          <nav className="hidden md:flex items-center gap-5 text-sm font-medium text-gray-600">
             <NavLink to="/" end className={navLinkClass}>Accueil</NavLink>
             <NavLink to="/boutique" className={navLinkClass}>Catalogue</NavLink>
-            <NavLink to="/a-propos" className={navLinkClass}>À propos</NavLink>
-            <NavLink to="/contact" className={navLinkClass}>Contact</NavLink>
+            {categories.map(cat => (
+              <NavLink key={cat.id} to={`/boutique?categorie=${cat.slug}`} className={navLinkClass}>
+                {cat.name}
+              </NavLink>
+            ))}
           </nav>
 
           <div className="flex items-center gap-3">
@@ -143,6 +155,13 @@ export default function Navbar() {
               )}
             </Link>
 
+            {/* Contact */}
+            <Link to="/contact" className="hidden sm:flex text-gray-600 hover:text-primary transition-colors" aria-label="Contact">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+            </Link>
+
             {/* Mobile menu button */}
             <button
               onClick={() => setMenuOpen(o => !o)}
@@ -167,7 +186,11 @@ export default function Navbar() {
           <div className="md:hidden border-t border-gray-100 bg-white px-4 py-4 space-y-3">
             <NavLink to="/" end className="block text-sm font-medium text-gray-700 py-1 hover:text-primary" onClick={() => setMenuOpen(false)}>Accueil</NavLink>
             <NavLink to="/boutique" className="block text-sm font-medium text-gray-700 py-1 hover:text-primary" onClick={() => setMenuOpen(false)}>Catalogue</NavLink>
-            <NavLink to="/a-propos" className="block text-sm font-medium text-gray-700 py-1 hover:text-primary" onClick={() => setMenuOpen(false)}>À propos</NavLink>
+            {categories.map(cat => (
+              <NavLink key={cat.id} to={`/boutique?categorie=${cat.slug}`} className="block text-sm font-medium text-gray-700 py-1 hover:text-primary" onClick={() => setMenuOpen(false)}>
+                {cat.name}
+              </NavLink>
+            ))}
             <NavLink to="/contact" className="block text-sm font-medium text-gray-700 py-1 hover:text-primary" onClick={() => setMenuOpen(false)}>Contact</NavLink>
             <div className="border-t border-gray-100 pt-3">
               {user ? (
