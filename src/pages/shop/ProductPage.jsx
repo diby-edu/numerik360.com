@@ -467,11 +467,29 @@ export default function ProductPage() {
                 )}
 
                 {product.product_type === 'digital' ? (
-                  <button onClick={handleOrderNow}
-                    className="w-full py-3 rounded-xl font-bold text-sm bg-primary text-white hover:bg-primary-dark transition-all flex items-center justify-center gap-2">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                    Acheter maintenant
-                  </button>
+                  <div className="space-y-2">
+                    <div className="flex gap-2">
+                      <button onClick={handleAddToCart}
+                        className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 border-2 ${
+                          added ? 'border-green-500 bg-green-50 text-green-700' : 'border-primary text-primary hover:bg-blue-50'
+                        }`}>
+                        {added
+                          ? <><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>Ajouté</>
+                          : <><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>Panier</>
+                        }
+                      </button>
+                      <button onClick={handleOrderNow}
+                        className="flex-1 py-3 rounded-xl font-bold text-sm bg-primary text-white hover:bg-primary-dark transition-all flex items-center justify-center gap-2">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                        Acheter
+                      </button>
+                    </div>
+                    {added && (
+                      <Link to="/panier" className="block text-center text-sm text-gray-500 hover:text-primary underline">
+                        Voir le panier →
+                      </Link>
+                    )}
+                  </div>
                 ) : (
                   <>
                     <button onClick={handleAddToCart}

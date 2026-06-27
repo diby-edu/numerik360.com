@@ -1,8 +1,13 @@
+import { useEffect } from 'react'
 import { useLocation, Link } from 'react-router-dom'
+import useCartStore from '../../store/cartStore'
 
 export default function OrderSuccessPage() {
   const { state } = useLocation()
   const orderId = state?.orderId
+  const clearCart = useCartStore(s => s.clearCart)
+
+  useEffect(() => { clearCart() }, [])
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">

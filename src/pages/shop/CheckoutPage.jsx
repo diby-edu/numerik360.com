@@ -24,7 +24,7 @@ const PAYMENT_OPTIONS = [
 export default function CheckoutPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const { items, getTotal, clearCart } = useCartStore()
+  const { items, getTotal, clearCart, updateQuantity, removeItem } = useCartStore()
   const total = getTotal()
   const allNonPhysical = items.length > 0 && items.every(
     ({ product }) => product.product_type === 'digital' || product.product_type === 'service'
@@ -207,7 +207,6 @@ export default function CheckoutPage() {
         if (!pd.invoice_url) {
           throw new Error('URL de paiement non reçue depuis PayDunya. Vérifiez la configuration ou choisissez "Paiement à la livraison".')
         }
-        clearCart()
         window.location.href = pd.invoice_url
         return
       }
@@ -347,13 +346,26 @@ export default function CheckoutPage() {
                   const key = `${product.id}-${variant?.id ?? 'base'}`
                   return (
                     <div key={key} className="text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600 flex-1 pr-2 line-clamp-1">{product.name} × {quantity}</span>
+                      <div className="flex justify-between items-start gap-2">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-gray-700 font-medium line-clamp-1">{product.name}</p>
+                          {variant && <p className="text-xs text-gray-400">{variant.name}</p>}
+                          <div className="flex items-center gap-1 mt-1">
+                            <button
+                              type="button"
+                              onClick={() => quantity <= 1 ? removeItem(product.id, variant?.id ?? null) : updateQuantity(product.id, quantity - 1, variant?.id ?? null)}
+                              className="w-6 h-6 rounded border border-gray-300 text-gray-600 hover:bg-gray-100 flex items-center justify-center text-xs font-bold"
+                            >−</button>
+                            <span className="w-6 text-center text-xs font-medium">{quantity}</span>
+                            <button
+                              type="button"
+                              onClick={() => updateQuantity(product.id, quantity + 1, variant?.id ?? null)}
+                              className="w-6 h-6 rounded border border-gray-300 text-gray-600 hover:bg-gray-100 flex items-center justify-center text-xs font-bold"
+                            >+</button>
+                          </div>
+                        </div>
                         <span className="font-medium text-gray-900 flex-shrink-0">{formatPrice(price * quantity)}</span>
                       </div>
-                      {variant && (
-                        <p className="text-xs text-gray-400 mt-0.5 pl-0">{variant.name}</p>
-                      )}
                     </div>
                   )
                 })}
