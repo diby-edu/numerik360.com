@@ -7,6 +7,9 @@ function itemKey(productId, variantId) {
   return `${productId}__${variantId ?? ''}`
 }
 
+// Verrou pour éviter les appels _sync concurrents
+let _syncLock = false
+
 const useCartStore = create(
   persist(
     (set, get) => ({
@@ -65,19 +68,25 @@ const useCartStore = create(
         get().items.reduce((sum, i) => sum + i.quantity, 0),
 
       _sync: async () => {
-        const { data: { user } } = await supabase.auth.getUser()
-        if (!user) return
-        const items = get().items
-        await supabase.from('cart_items').delete().eq('user_id', user.id)
-        if (items.length > 0) {
-          await supabase.from('cart_items').insert(
-            items.map(i => ({
-              user_id: user.id,
-              product_id: i.product.id,
-              variant_id: i.variant?.id ?? null,
-              quantity: i.quantity,
-            }))
-          )
+        if (_syncLock) return
+        _syncLock = true
+        try {
+          const { data: { user } } = await supabase.auth.getUser()
+          if (!user) return
+          const items = get().items
+          await supabase.from('cart_items').delete().eq('user_id', user.id)
+          if (items.length > 0) {
+            await supabase.from('cart_items').insert(
+              items.map(i => ({
+                user_id: user.id,
+                product_id: i.product.id,
+                variant_id: i.variant?.id ?? null,
+                quantity: i.quantity,
+              }))
+            )
+          }
+        } finally {
+          _syncLock = false
         }
       },
 
