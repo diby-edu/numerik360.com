@@ -325,7 +325,7 @@ app.post('/api/paydunya/checkout', async (req, res) => {
     const d = await r.json()
     if (d.response_code !== '00') return res.status(400).json({ error: d.description || 'Erreur PayDunya' })
     await sbQuery('PATCH', `orders?id=eq.${orderId}`, { paydunya_token: d.token, payment_status: 'pending' })
-    res.json({ invoice_url: d.invoice_url, token: d.token })
+    res.json({ invoice_url: d.response_text, token: d.token })
   } catch (e) { console.error(e); res.status(500).json({ error: e.message }) }
 })
 
