@@ -1,11 +1,14 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import Navbar from '../../components/shop/Navbar'
 
 export default function RegisterPage() {
   const navigate = useNavigate()
-  const [form, setForm] = useState({ full_name: '', email: '', password: '', confirm: '' })
+  const location = useLocation()
+  const from = location.state?.from ?? '/mon-compte'
+
+  const [form, setForm] = useState({ full_name: '', phone: '', email: '', password: '', confirm: '' })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -26,16 +29,21 @@ export default function RegisterPage() {
       return
     }
     setLoading(true)
-    const { error } = await supabase.auth.signUp({
+    const { data, error: signUpError } = await supabase.auth.signUp({
       email: form.email,
       password: form.password,
-      options: { data: { full_name: form.full_name } },
+      options: { data: { full_name: form.full_name, phone: form.phone } },
     })
-    if (error) {
-      setError(error.message.includes('already') ? 'Cet email est déjà utilisé.' : error.message)
-    } else {
-      navigate('/mon-compte')
+    if (signUpError) {
+      setError(signUpError.message.includes('already') ? 'Cet email est déjà utilisé.' : signUpError.message)
+      setLoading(false)
+      return
     }
+    // Mettre à jour le profil avec le téléphone
+    if (data.user && form.phone) {
+      await supabase.from('profiles').update({ full_name: form.full_name, phone: form.phone }).eq('id', data.user.id)
+    }
+    navigate(from, { replace: true })
     setLoading(false)
   }
 
@@ -59,6 +67,17 @@ export default function RegisterPage() {
                 autoFocus
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="Votre nom"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Téléphone</label>
+              <input
+                type="tel"
+                name="phone"
+                value={form.phone}
+                onChange={handleChange}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                placeholder="+221 77 000 00 00"
               />
             </div>
             <div>
@@ -111,7 +130,7 @@ export default function RegisterPage() {
 
           <p className="text-center text-sm text-gray-500 mt-6">
             Déjà un compte ?{' '}
-            <Link to="/connexion" className="text-primary font-medium hover:underline">
+            <Link to="/connexion" state={{ from }} className="text-primary font-medium hover:underline">
               Se connecter
             </Link>
           </p>

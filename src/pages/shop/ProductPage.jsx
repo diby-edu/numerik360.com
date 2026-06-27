@@ -141,8 +141,8 @@ export default function ProductPage() {
 
   function handleOrderNow() {
     if (!canAdd) return
-    if (!added) addItem(product, quantity, activeVariant)
-    navigate('/panier')
+    addItem(product, quantity, activeVariant)
+    navigate('/checkout')
   }
 
   const pageUrl = encodeURIComponent(typeof window !== 'undefined' ? window.location.href : '')
@@ -466,24 +466,33 @@ export default function ProductPage() {
                   </div>
                 )}
 
-                <button onClick={handleAddToCart}
-                  className={`w-full py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 ${
-                    added ? 'bg-green-600 text-white scale-95' : 'bg-primary text-white hover:bg-primary-dark'
-                  }`}>
-                  {added ? (
-                    <><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>Ajouté au panier</>
-                  ) : product.product_type === 'service' ? (
-                    <><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>Commander cette formule</>
-                  ) : product.product_type === 'digital' ? (
-                    <><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>Acheter</>
-                  ) : (
-                    <><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>Ajouter au panier</>
-                  )}
-                </button>
-
-                <Link to="/panier" className="block text-center mt-3 text-sm text-gray-500 hover:text-primary underline">
-                  Voir le panier →
-                </Link>
+                {product.product_type === 'digital' ? (
+                  <button onClick={handleOrderNow}
+                    className="w-full py-3 rounded-xl font-bold text-sm bg-primary text-white hover:bg-primary-dark transition-all flex items-center justify-center gap-2">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                    Acheter maintenant
+                  </button>
+                ) : (
+                  <>
+                    <button onClick={handleAddToCart}
+                      className={`w-full py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 ${
+                        added ? 'bg-green-600 text-white scale-95' : 'bg-primary text-white hover:bg-primary-dark'
+                      }`}>
+                      {added ? (
+                        <><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>Ajouté au panier</>
+                      ) : product.product_type === 'service' ? (
+                        <><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>Commander cette formule</>
+                      ) : (
+                        <><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>Ajouter au panier</>
+                      )}
+                    </button>
+                    {added && (
+                      <Link to="/panier" className="block text-center mt-3 text-sm text-gray-500 hover:text-primary underline">
+                        Voir le panier →
+                      </Link>
+                    )}
+                  </>
+                )}
               </>
             ) : product.product_type !== 'service' && needsVariant ? (
               <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-center">

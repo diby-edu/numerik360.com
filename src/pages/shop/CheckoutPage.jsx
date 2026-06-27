@@ -17,7 +17,7 @@ function formatPrice(amount) {
 }
 
 const PAYMENT_OPTIONS = [
-  { value: 'delivery', label: 'Paiement à la livraison', icon: '🚚', desc: 'Payez en espèces à la réception' },
+  { value: 'cod', label: 'Paiement à la livraison', icon: '🚚', desc: 'Payez en espèces à la réception' },
   { value: 'paydunya', label: 'Payer en ligne', icon: '💳', desc: 'Wave, Orange Money, carte bancaire...' },
 ]
 
@@ -31,7 +31,7 @@ export default function CheckoutPage() {
   )
   const { user, loading: authLoading } = useAuth()
   const [form, setForm] = useState({ name: '', email: '', phone: '', address: '' })
-  const [paymentMethod, setPaymentMethod] = useState('delivery')
+  const [paymentMethod, setPaymentMethod] = useState('cod')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -60,6 +60,11 @@ export default function CheckoutPage() {
     },
     staleTime: 300000,
   })
+
+  // Produits numériques → forcer paiement en ligne
+  useEffect(() => {
+    if (allNonPhysical) setPaymentMethod('paydunya')
+  }, [allNonPhysical])
 
   useEffect(() => {
     if (profile) {
@@ -292,7 +297,7 @@ export default function CheckoutPage() {
             <div className="bg-white rounded-xl border border-gray-200 p-5">
               <h2 className="font-semibold text-gray-900 mb-4">Mode de paiement</h2>
               <div className="space-y-2">
-                {PAYMENT_OPTIONS.map(opt => (
+                {PAYMENT_OPTIONS.filter(opt => allNonPhysical ? opt.value === 'paydunya' : true).map(opt => (
                   <label
                     key={opt.value}
                     className={`flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-colors ${
