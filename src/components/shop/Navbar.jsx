@@ -85,8 +85,16 @@ export default function Navbar() {
           </div>
         )}
         <div className="w-full px-6 h-16 flex items-center relative">
-          {/* Gauche — Logo */}
-          <Link to="/" className="text-xl font-bold text-primary z-10">{shopName}</Link>
+          {/* Gauche — Logo V5 Plasma Ovale */}
+          <Link to="/" className="z-10 flex-shrink-0" aria-label="Accueil">
+            <div className="logo-v5">
+              <div className="logo-v5-ring r1"></div>
+              <div className="logo-v5-ring r2"></div>
+              <div className="logo-v5-core">
+                <span className="logo-v5-name">Numerik360</span>
+              </div>
+            </div>
+          </Link>
 
           {/* Centre — Catégories (absolument centré) */}
           <nav className="hidden md:flex items-center gap-5 text-sm font-medium text-gray-600 absolute left-1/2 -translate-x-1/2 whitespace-nowrap">
