@@ -204,6 +204,9 @@ export default function CheckoutPage() {
           }
           throw new Error(msg || 'Erreur lors de la création du paiement. Réessayez ou choisissez "Paiement à la livraison".')
         }
+        if (!pd.invoice_url) {
+          throw new Error('URL de paiement non reçue depuis PayDunya. Vérifiez la configuration ou choisissez "Paiement à la livraison".')
+        }
         clearCart()
         window.location.href = pd.invoice_url
         return
@@ -362,9 +365,9 @@ export default function CheckoutPage() {
                 </div>
               </div>
               <button
-                type="submit"
-                form="checkout-form"
+                type="button"
                 disabled={loading}
+                onClick={() => document.getElementById('checkout-form').requestSubmit()}
                 className="w-full bg-primary text-white py-3 rounded-xl font-bold hover:bg-primary-dark transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
               >
                 {loading ? (
