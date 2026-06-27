@@ -47,7 +47,7 @@ export default function CheckoutPage() {
     queryKey: ['profile', user?.id],
     enabled: Boolean(user),
     queryFn: async () => {
-      const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+      const { data } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle()
       return data
     },
   })

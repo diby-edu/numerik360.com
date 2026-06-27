@@ -32,7 +32,7 @@ export default function AccountLayout() {
 
   useEffect(() => {
     if (!session) { setIsAdmin(false); return }
-    supabase.from('profiles').select('is_admin').eq('id', session.user.id).single()
+    supabase.from('profiles').select('is_admin').eq('id', session.user.id).maybeSingle()
       .then(({ data }) => setIsAdmin(data?.is_admin ?? false))
   }, [session])
 

@@ -25,7 +25,7 @@ export default function LoginPage() {
         .from('profiles')
         .select('is_admin')
         .eq('id', data.user.id)
-        .single()
+        .maybeSingle()
       if (profile?.is_admin) {
         navigate('/admin/dashboard', { replace: true })
       } else {
