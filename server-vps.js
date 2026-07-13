@@ -276,14 +276,21 @@ app.post('/api/generate-description', async (req, res) => {
 /* Emails : nouvelle commande */
 app.post('/api/notify-order', async (req, res) => {
   try {
-    const { order } = req.body
+    const { order: orderBody } = req.body
+    if (!orderBody?.id) return res.status(400).json({ error: 'order.id manquant' })
+
+    // Vérifier que la commande existe vraiment en base
+    const rows = await sbQuery('GET', `orders?id=eq.${orderBody.id}&select=*`)
+    const order = rows?.[0]
+    if (!order) return res.status(404).json({ error: 'Commande introuvable' })
+
     const shop = process.env.SHOP_NAME || 'Boutique'
     await Promise.all([
       order.customer_email && sendMail(order.customer_email, `Confirmation de commande — ${shop}`, tplConfirm(order)),
       sendMail(process.env.ADMIN_EMAIL, `Nouvelle commande — ${shop}`, tplAdmin(order)),
     ])
-    // Livraison numérique immédiate pour les commandes à la livraison
-    if (order.payment_method === 'delivery') {
+    // Livraison numérique immédiate pour les commandes paiement à la livraison (cod)
+    if (order.payment_method === 'cod') {
       await deliverDigitalItems(order)
     }
     res.json({ ok: true })
@@ -309,17 +316,24 @@ app.post('/api/notify-status', async (req, res) => {
 /* PayDunya : créer facture */
 app.post('/api/paydunya/checkout', async (req, res) => {
   try {
-    const { orderId, total, customerEmail } = req.body
+    const { orderId, customerEmail } = req.body
+    if (!orderId) return res.status(400).json({ error: 'orderId manquant' })
+
+    // Lire le total depuis la DB — ne pas faire confiance au client
+    const rows = await sbQuery('GET', `orders?id=eq.${orderId}&select=id,total,customer_email`)
+    const dbOrder = rows?.[0]
+    if (!dbOrder) return res.status(404).json({ error: 'Commande introuvable' })
+
     const shop = process.env.SHOP_NAME || 'Boutique'
     const body = {
-      invoice: { total_amount: Math.round(total), description: `Commande ${shop}` },
+      invoice: { total_amount: Math.round(dbOrder.total), description: `Commande ${shop}` },
       store: { name: shop },
       actions: {
         cancel_url:   'https://numerik360.com/checkout?payment=annule',
-        return_url:   'https://numerik360.com/commande-confirmee',
+        return_url:   'https://numerik360.com/commande-confirmee?success=1',
         callback_url: 'https://numerik360.com/api/paydunya-webhook',
       },
-      custom_data: { order_id: orderId, customer_email: customerEmail },
+      custom_data: { order_id: orderId, customer_email: customerEmail ?? dbOrder.customer_email },
     }
     const r = await fetch(`${PD_BASE}/checkout-invoice/create`, { method: 'POST', headers: PD_H, body: JSON.stringify(body) })
     const d = await r.json()
@@ -341,6 +355,12 @@ app.post('/api/paydunya-webhook', async (req, res) => {
     const orders = await sbQuery('GET', `orders?paydunya_token=eq.${token}&select=*`)
     const order = orders?.[0]
     if (!order) return res.status(404).json({ error: 'Commande introuvable' })
+    // Vérifier que le montant confirmé par PayDunya correspond au total réel de la commande
+    const paidAmount = Number(vd.invoice?.total_amount ?? 0)
+    if (paidAmount < Math.round(order.total)) {
+      console.error(`PayDunya montant insuffisant: payé ${paidAmount} pour commande ${order.id} (total: ${order.total})`)
+      return res.status(400).json({ error: 'Montant payé insuffisant' })
+    }
     await sbQuery('PATCH', `orders?id=eq.${order.id}`, { payment_status: 'paid', status: 'confirmed' })
     const shop = process.env.SHOP_NAME || 'Boutique'
     await Promise.all([

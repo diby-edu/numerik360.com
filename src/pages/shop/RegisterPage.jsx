@@ -29,22 +29,25 @@ export default function RegisterPage() {
       return
     }
     setLoading(true)
-    const { data, error: signUpError } = await supabase.auth.signUp({
-      email: form.email,
-      password: form.password,
-      options: { data: { full_name: form.full_name, phone: form.phone } },
-    })
-    if (signUpError) {
-      setError(signUpError.message.includes('already') ? 'Cet email est déjà utilisé.' : signUpError.message)
+    try {
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email: form.email,
+        password: form.password,
+        options: { data: { full_name: form.full_name, phone: form.phone } },
+      })
+      if (signUpError) {
+        setError(signUpError.message.includes('already') ? 'Cet email est déjà utilisé.' : signUpError.message)
+        return
+      }
+      if (data.user && form.phone) {
+        await supabase.from('profiles').update({ full_name: form.full_name, phone: form.phone }).eq('id', data.user.id)
+      }
+      navigate(from, { replace: true })
+    } catch {
+      setError('Erreur de connexion. Vérifiez votre connexion et réessayez.')
+    } finally {
       setLoading(false)
-      return
     }
-    // Mettre à jour le profil avec le téléphone
-    if (data.user && form.phone) {
-      await supabase.from('profiles').update({ full_name: form.full_name, phone: form.phone }).eq('id', data.user.id)
-    }
-    navigate(from, { replace: true })
-    setLoading(false)
   }
 
   return (

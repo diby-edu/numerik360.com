@@ -16,6 +16,7 @@ export default function ProductPage() {
   const { slug } = useParams()
   const navigate = useNavigate()
   const addItem = useCartStore(s => s.addItem)
+  const cartItems = useCartStore(s => s.items)
   const [quantity, setQuantity] = useState(1)
   const [activeImage, setActiveImage] = useState(0)
   const [added, setAdded] = useState(false)
@@ -141,7 +142,10 @@ export default function ProductPage() {
 
   function handleOrderNow() {
     if (!canAdd) return
-    addItem(product, quantity, activeVariant)
+    const alreadyInCart = cartItems.some(
+      i => i.product.id === product.id && (i.variant?.id ?? null) === (activeVariant?.id ?? null)
+    )
+    if (!alreadyInCart) addItem(product, quantity, activeVariant)
     navigate('/checkout')
   }
 

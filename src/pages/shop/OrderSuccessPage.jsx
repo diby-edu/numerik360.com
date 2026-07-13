@@ -1,13 +1,20 @@
 import { useEffect } from 'react'
-import { useLocation, Link } from 'react-router-dom'
+import { useLocation, useSearchParams, Link } from 'react-router-dom'
 import useCartStore from '../../store/cartStore'
 
 export default function OrderSuccessPage() {
   const { state } = useLocation()
-  const orderId = state?.orderId
+  const [searchParams] = useSearchParams()
   const clearCart = useCartStore(s => s.clearCart)
 
-  useEffect(() => { clearCart() }, [])
+  // orderId : depuis React Router state (COD) ou sessionStorage (PayDunya redirect)
+  const orderId = state?.orderId ?? sessionStorage.getItem('pd_order_id')
+  const isRealSuccess = searchParams.get('success') === '1' || Boolean(state?.orderId)
+
+  useEffect(() => {
+    if (isRealSuccess) clearCart()
+    sessionStorage.removeItem('pd_order_id')
+  }, [])
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">

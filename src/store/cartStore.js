@@ -73,8 +73,10 @@ const useCartStore = create(
         try {
           const { data: { user } } = await supabase.auth.getUser()
           if (!user) return
-          const items = get().items
           await supabase.from('cart_items').delete().eq('user_id', user.id)
+          // Lire les items APRÈS le delete pour éviter d'insérer un snapshot stale
+          // si clearCart() a tourné en parallèle pendant l'attente du getUser()
+          const items = get().items
           if (items.length > 0) {
             await supabase.from('cart_items').insert(
               items.map(i => ({

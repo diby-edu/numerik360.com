@@ -31,7 +31,7 @@ export default function CheckoutPage() {
   )
   const { user, loading: authLoading } = useAuth()
   const [form, setForm] = useState({ name: '', email: '', phone: '', address: '' })
-  const [paymentMethod, setPaymentMethod] = useState('cod')
+  const [paymentMethod, setPaymentMethod] = useState(allNonPhysical ? 'paydunya' : 'cod')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -61,9 +61,10 @@ export default function CheckoutPage() {
     staleTime: 300000,
   })
 
-  // Produits numériques → forcer paiement en ligne
+  // Synchroniser le mode de paiement si le type de panier change au checkout
   useEffect(() => {
     if (allNonPhysical) setPaymentMethod('paydunya')
+    else setPaymentMethod('cod')
   }, [allNonPhysical])
 
   useEffect(() => {
@@ -207,6 +208,7 @@ export default function CheckoutPage() {
         if (!pd.invoice_url) {
           throw new Error('URL de paiement non reçue depuis PayDunya. Vérifiez la configuration ou choisissez "Paiement à la livraison".')
         }
+        sessionStorage.setItem('pd_order_id', order.id)
         window.location.href = pd.invoice_url
         return
       }
@@ -219,7 +221,7 @@ export default function CheckoutPage() {
       }).catch(() => {})
 
       clearCart()
-      navigate('/commande-confirmee', { state: { orderId: order.id } })
+      navigate('/commande-confirmee?success=1', { state: { orderId: order.id } })
     } catch (err) {
       setError(err.message || 'Une erreur est survenue. Veuillez réessayer.')
       console.error(err)
@@ -359,8 +361,12 @@ export default function CheckoutPage() {
                             <span className="w-6 text-center text-xs font-medium">{quantity}</span>
                             <button
                               type="button"
-                              onClick={() => updateQuantity(product.id, quantity + 1, variant?.id ?? null)}
-                              className="w-6 h-6 rounded border border-gray-300 text-gray-600 hover:bg-gray-100 flex items-center justify-center text-xs font-bold"
+                              onClick={() => {
+                                const stock = variant?.stock ?? product?.stock ?? Infinity
+                                if (quantity < stock) updateQuantity(product.id, quantity + 1, variant?.id ?? null)
+                              }}
+                              disabled={quantity >= (variant?.stock ?? product?.stock ?? Infinity)}
+                              className="w-6 h-6 rounded border border-gray-300 text-gray-600 hover:bg-gray-100 flex items-center justify-center text-xs font-bold disabled:opacity-40"
                             >+</button>
                           </div>
                         </div>
@@ -379,7 +385,11 @@ export default function CheckoutPage() {
               <button
                 type="button"
                 disabled={loading}
-                onClick={() => document.getElementById('checkout-form').requestSubmit()}
+                onClick={() => {
+                  const form = document.getElementById('checkout-form')
+                  if (typeof form.requestSubmit === 'function') form.requestSubmit()
+                  else form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
+                }}
                 className="w-full bg-primary text-white py-3 rounded-xl font-bold hover:bg-primary-dark transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
               >
                 {loading ? (
