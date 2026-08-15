@@ -340,30 +340,19 @@ function SliderHero({ title, subtitle, slides }) {
 
 /* ── Composant principal ── */
 export default function HeroSection() {
-  const { data: settings = {}, isLoading } = useQuery({
+  const { data: settings = {} } = useQuery({
     queryKey: ['hero-settings'],
     queryFn: fetchHeroSettings,
-    staleTime: 30000,
+    staleTime: 5 * 60 * 1000,
   })
 
-  const mode     = settings.hero_mode     ?? 'default'
+  const mode     = settings.hero_mode     ?? 'animation'
   const title    = settings.hero_title    ?? 'Bienvenue sur notre boutique'
   const subtitle = settings.hero_subtitle ?? 'Découvrez notre sélection de produits de qualité, livrés directement chez vous.'
   const videoUrl = settings.hero_video_url ?? ''
 
   let slides = []
   try { slides = JSON.parse(settings.hero_slides ?? '[]') } catch {}
-
-  if (isLoading) {
-    return (
-      <div
-        className="min-h-[560px] flex items-center justify-center text-white"
-        style={{ background: 'linear-gradient(135deg, var(--hero-from), var(--hero-to))' }}
-      >
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-white" />
-      </div>
-    )
-  }
 
   if (mode === 'animation') return <AnimationHero title={title} subtitle={subtitle} />
   if (mode === 'video' && videoUrl) return <VideoHero title={title} subtitle={subtitle} videoUrl={videoUrl} />

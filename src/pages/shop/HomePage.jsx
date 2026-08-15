@@ -141,7 +141,7 @@ export default function HomePage() {
     queryFn: async () => {
       const [{ count: products }, { count: orders }] = await Promise.all([
         supabase.from('products').select('id', { count: 'exact', head: true }).eq('is_active', true),
-        supabase.from('orders').select('id', { count: 'exact', head: true }),
+        supabase.from('orders').select('id', { count: 'exact', head: true }).eq('payment_status', 'paid'),
       ])
       return { products: products ?? 0, orders: orders ?? 0 }
     },
