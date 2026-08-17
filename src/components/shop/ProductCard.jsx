@@ -24,6 +24,8 @@ export default function ProductCard({ product }) {
   const hasPromo = product.promo_price && product.promo_price < product.price
   const hasRange = product.price_max && product.price_max > product.price
   const isPhysical = product.product_type === 'physical' || !product.product_type
+  const isService = product.product_type === 'service'
+  const showFrom = (isService || product.has_variants) && !hasPromo && !hasRange
   const outOfStock = isPhysical && product.stock === 0
   const showNew = !hasPromo && !outOfStock && isNew(product.created_at)
 
@@ -97,6 +99,11 @@ export default function ProductCard({ product }) {
           {hasRange ? (
             <span className="text-primary font-bold text-base">
               {formatPrice(product.price)} – {formatPrice(product.price_max)}
+            </span>
+          ) : showFrom ? (
+            <span className="text-primary font-bold text-base">
+              <span className="text-xs font-normal text-gray-500 mr-1">À partir de</span>
+              {formatPrice(product.price)}
             </span>
           ) : (
             <>
