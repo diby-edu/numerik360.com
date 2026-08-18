@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Fond cercle bleu -->
+  <circle cx="32" cy="32" r="32" fill="#2563EB"/>
+  <!-- Anneau externe -->
+  <circle cx="32" cy="32" r="26" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="2"/>
+  <!-- Anneau interne -->
+  <circle cx="32" cy="32" r="18" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="1.5"/>
+  <!-- Lettre N -->
+  <text x="32" y="43" font-family="Arial, sans-serif" font-size="28" font-weight="900" fill="white" text-anchor="middle" letter-spacing="-1">N</text>
+</svg>
