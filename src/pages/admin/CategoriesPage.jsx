@@ -20,6 +20,7 @@ export default function CategoriesPage() {
 
   const { data: categories = [], isLoading } = useQuery({
     queryKey: ['categories'],
+    staleTime: 60000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('categories')

@@ -16,7 +16,8 @@ export default function ThemeProvider() {
   const { data: theme = 'ocean' } = useQuery({
     queryKey: ['active-theme'],
     queryFn: fetchActiveTheme,
-    staleTime: 30000,
+    staleTime: 24 * 60 * 60 * 1000,
+    gcTime: 24 * 60 * 60 * 1000,
   })
 
   useEffect(() => {

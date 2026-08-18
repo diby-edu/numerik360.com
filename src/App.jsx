@@ -1,51 +1,63 @@
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { useEffect, useState } from 'react'
+import { HelmetProvider } from 'react-helmet-async'
 import { supabase } from './lib/supabase'
-
-// Theme
 import ThemeProvider from './components/ThemeProvider'
 
-// Pages boutique
+// HomePage chargée immédiatement (above the fold)
 import HomePage from './pages/shop/HomePage'
-import ShopPage from './pages/shop/ShopPage'
-import ProductPage from './pages/shop/ProductPage'
-import CartPage from './pages/shop/CartPage'
-import CheckoutPage from './pages/shop/CheckoutPage'
-import ServiceRequestPage from './pages/shop/ServiceRequestPage'
-import OrderSuccessPage from './pages/shop/OrderSuccessPage'
-import LoginPage from './pages/shop/LoginPage'
-import RegisterPage from './pages/shop/RegisterPage'
-import AboutPage from './pages/shop/AboutPage'
-import ContactPage from './pages/shop/ContactPage'
-import FavoritesPage from './pages/shop/FavoritesPage'
-import PrivacyPage from './pages/shop/PrivacyPage'
-import TermsPage from './pages/shop/TermsPage'
-import RgpdPage from './pages/shop/RgpdPage'
 
-// Espace client
-import AccountLayout from './pages/shop/account/AccountLayout'
-import AccountOrdersPage from './pages/shop/account/AccountOrdersPage'
-import AccountProfilePage from './pages/shop/account/AccountProfilePage'
+// Toutes les autres pages en lazy (code splitting)
+const ShopPage             = lazy(() => import('./pages/shop/ShopPage'))
+const ProductPage          = lazy(() => import('./pages/shop/ProductPage'))
+const CartPage             = lazy(() => import('./pages/shop/CartPage'))
+const CheckoutPage         = lazy(() => import('./pages/shop/CheckoutPage'))
+const ServiceRequestPage   = lazy(() => import('./pages/shop/ServiceRequestPage'))
+const OrderSuccessPage     = lazy(() => import('./pages/shop/OrderSuccessPage'))
+const LoginPage            = lazy(() => import('./pages/shop/LoginPage'))
+const RegisterPage         = lazy(() => import('./pages/shop/RegisterPage'))
+const AboutPage            = lazy(() => import('./pages/shop/AboutPage'))
+const ContactPage          = lazy(() => import('./pages/shop/ContactPage'))
+const FavoritesPage        = lazy(() => import('./pages/shop/FavoritesPage'))
+const PrivacyPage          = lazy(() => import('./pages/shop/PrivacyPage'))
+const TermsPage            = lazy(() => import('./pages/shop/TermsPage'))
+const RgpdPage             = lazy(() => import('./pages/shop/RgpdPage'))
+const NotFoundPage         = lazy(() => import('./pages/shop/NotFoundPage'))
 
-// Pages admin
-import AdminLogin from './pages/admin/AdminLogin'
-import AdminLayout from './pages/admin/AdminLayout'
-import DashboardPage from './pages/admin/DashboardPage'
-import ProductsPage from './pages/admin/ProductsPage'
-import ProductFormPage from './pages/admin/ProductFormPage'
-import OrdersPage from './pages/admin/OrdersPage'
-import CategoriesPage from './pages/admin/CategoriesPage'
-import SettingsPage from './pages/admin/SettingsPage'
-import AttributesPage from './pages/admin/AttributesPage'
-import TestimonialsPage from './pages/admin/TestimonialsPage'
-import NewsletterPage from './pages/admin/NewsletterPage'
+const AccountLayout           = lazy(() => import('./pages/shop/account/AccountLayout'))
+const AccountOrdersPage       = lazy(() => import('./pages/shop/account/AccountOrdersPage'))
+const AccountProfilePage      = lazy(() => import('./pages/shop/account/AccountProfilePage'))
+const AccountOrderDetailPage  = lazy(() => import('./pages/shop/account/AccountOrderDetailPage'))
 
-// Espace client - détail commande
-import AccountOrderDetailPage from './pages/shop/account/AccountOrderDetailPage'
+const AdminLogin       = lazy(() => import('./pages/admin/AdminLogin'))
+const AdminLayout      = lazy(() => import('./pages/admin/AdminLayout'))
+const DashboardPage    = lazy(() => import('./pages/admin/DashboardPage'))
+const ProductsPage     = lazy(() => import('./pages/admin/ProductsPage'))
+const ProductFormPage  = lazy(() => import('./pages/admin/ProductFormPage'))
+const OrdersPage       = lazy(() => import('./pages/admin/OrdersPage'))
+const CategoriesPage   = lazy(() => import('./pages/admin/CategoriesPage'))
+const SettingsPage     = lazy(() => import('./pages/admin/SettingsPage'))
+const AttributesPage   = lazy(() => import('./pages/admin/AttributesPage'))
+const TestimonialsPage = lazy(() => import('./pages/admin/TestimonialsPage'))
+const NewsletterPage   = lazy(() => import('./pages/admin/NewsletterPage'))
+
+const Spinner = () => (
+  <div className="min-h-screen flex items-center justify-center">
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+  </div>
+)
 
 function ProtectedAdminRoute({ session, children }) {
-  if (session === null) return <Navigate to="/admin/login" replace />
-  if (session === undefined) return null
+  const [isAdmin, setIsAdmin] = useState(null)
+
+  useEffect(() => {
+    if (!session) { setIsAdmin(false); return }
+    supabase.from('profiles').select('is_admin').eq('id', session.user.id).maybeSingle()
+      .then(({ data }) => setIsAdmin(data?.is_admin ?? false))
+  }, [session?.user?.id])
+
+  if (session === null || isAdmin === false) return <Navigate to="/admin/login" replace />
+  if (session === undefined || isAdmin === null) return null
   return children
 }
 
@@ -61,61 +73,60 @@ export default function App() {
   }, [])
 
   return (
-    <BrowserRouter>
-      <Routes>
-        {/* Boutique — ThemeProvider applique le thème choisi dans l'admin */}
-        <Route element={<ThemeProvider />}>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/boutique" element={<ShopPage />} />
-          <Route path="/produit/:slug" element={<ProductPage />} />
-          <Route path="/panier" element={<CartPage />} />
-          <Route path="/checkout" element={<CheckoutPage />} />
-          <Route path="/demande-service/:slug" element={<ServiceRequestPage />} />
-          <Route path="/commande-confirmee" element={<OrderSuccessPage />} />
+    <HelmetProvider>
+      <BrowserRouter>
+        <Suspense fallback={<Spinner />}>
+          <Routes>
+            <Route element={<ThemeProvider />}>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/boutique" element={<ShopPage />} />
+              <Route path="/produit/:slug" element={<ProductPage />} />
+              <Route path="/panier" element={<CartPage />} />
+              <Route path="/checkout" element={<CheckoutPage />} />
+              <Route path="/demande-service/:slug" element={<ServiceRequestPage />} />
+              <Route path="/commande-confirmee" element={<OrderSuccessPage />} />
+              <Route path="/connexion" element={<LoginPage />} />
+              <Route path="/inscription" element={<RegisterPage />} />
+              <Route path="/a-propos" element={<AboutPage />} />
+              <Route path="/contact" element={<ContactPage />} />
+              <Route path="/favoris" element={<FavoritesPage />} />
+              <Route path="/confidentialite" element={<PrivacyPage />} />
+              <Route path="/conditions" element={<TermsPage />} />
+              <Route path="/rgpd" element={<RgpdPage />} />
 
-          {/* Auth client */}
-          <Route path="/connexion" element={<LoginPage />} />
-          <Route path="/inscription" element={<RegisterPage />} />
-          <Route path="/a-propos" element={<AboutPage />} />
-          <Route path="/contact" element={<ContactPage />} />
-          <Route path="/favoris" element={<FavoritesPage />} />
-          <Route path="/confidentialite" element={<PrivacyPage />} />
-          <Route path="/conditions" element={<TermsPage />} />
-          <Route path="/rgpd" element={<RgpdPage />} />
+              <Route path="/mon-compte" element={<AccountLayout />}>
+                <Route index element={<Navigate to="/mon-compte/commandes" replace />} />
+                <Route path="commandes" element={<AccountOrdersPage />} />
+                <Route path="commandes/:id" element={<AccountOrderDetailPage />} />
+                <Route path="profil" element={<AccountProfilePage />} />
+              </Route>
+            </Route>
 
-          {/* Espace client */}
-          <Route path="/mon-compte" element={<AccountLayout />}>
-            <Route index element={<Navigate to="/mon-compte/commandes" replace />} />
-            <Route path="commandes" element={<AccountOrdersPage />} />
-            <Route path="commandes/:id" element={<AccountOrderDetailPage />} />
-            <Route path="profil" element={<AccountProfilePage />} />
-          </Route>
-        </Route>
+            <Route path="/admin/login" element={
+              session ? <Navigate to="/admin/dashboard" replace /> : <AdminLogin />
+            } />
+            <Route path="/admin" element={
+              <ProtectedAdminRoute session={session}>
+                <AdminLayout />
+              </ProtectedAdminRoute>
+            }>
+              <Route index element={<Navigate to="/admin/dashboard" replace />} />
+              <Route path="dashboard" element={<DashboardPage />} />
+              <Route path="produits" element={<ProductsPage />} />
+              <Route path="produits/nouveau" element={<ProductFormPage />} />
+              <Route path="produits/:id/modifier" element={<ProductFormPage />} />
+              <Route path="commandes" element={<OrdersPage />} />
+              <Route path="categories" element={<CategoriesPage />} />
+              <Route path="temoignages" element={<TestimonialsPage />} />
+              <Route path="newsletter" element={<NewsletterPage />} />
+              <Route path="attributs" element={<AttributesPage />} />
+              <Route path="parametres" element={<SettingsPage />} />
+            </Route>
 
-        {/* Admin */}
-        <Route path="/admin/login" element={
-          session ? <Navigate to="/admin/dashboard" replace /> : <AdminLogin />
-        } />
-        <Route path="/admin" element={
-          <ProtectedAdminRoute session={session}>
-            <AdminLayout />
-          </ProtectedAdminRoute>
-        }>
-          <Route index element={<Navigate to="/admin/dashboard" replace />} />
-          <Route path="dashboard" element={<DashboardPage />} />
-          <Route path="produits" element={<ProductsPage />} />
-          <Route path="produits/nouveau" element={<ProductFormPage />} />
-          <Route path="produits/:id/modifier" element={<ProductFormPage />} />
-          <Route path="commandes" element={<OrdersPage />} />
-          <Route path="categories" element={<CategoriesPage />} />
-          <Route path="temoignages" element={<TestimonialsPage />} />
-          <Route path="newsletter" element={<NewsletterPage />} />
-          <Route path="attributs" element={<AttributesPage />} />
-          <Route path="parametres" element={<SettingsPage />} />
-        </Route>
-
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </BrowserRouter>
+            <Route path="*" element={<NotFoundPage />} />
+          </Routes>
+        </Suspense>
+      </BrowserRouter>
+    </HelmetProvider>
   )
 }

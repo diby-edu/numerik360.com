@@ -22,6 +22,7 @@ export default function DashboardPage() {
 
   const { data: orders = [] } = useQuery({
     queryKey: ['orders-all'],
+    staleTime: 30000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('orders')

@@ -9,6 +9,7 @@ create table if not exists profiles (
   full_name text,
   phone text,
   address text,
+  is_admin boolean default false,
   updated_at timestamptz default now()
 );
 
@@ -56,7 +57,7 @@ create table if not exists cart_items (
   product_id uuid references products(id) on delete cascade not null,
   quantity integer not null default 1,
   created_at timestamptz default now(),
-  unique(user_id, product_id)
+  unique(user_id, product_id, variant_id)
 );
 
 alter table cart_items enable row level security;

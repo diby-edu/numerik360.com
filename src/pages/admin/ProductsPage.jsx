@@ -11,6 +11,7 @@ export default function ProductsPage() {
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ['products-admin'],
+    staleTime: 30000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('products')

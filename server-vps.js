@@ -1,9 +1,20 @@
 const express = require('express')
 const nodemailer = require('nodemailer')
+const helmet = require('helmet')
+const cors = require('cors')
+const rateLimit = require('express-rate-limit')
 require('dotenv').config()
 
 const app = express()
+app.use(helmet())
+app.use(cors({ origin: 'https://numerik360.com', methods: ['GET', 'POST'] }))
 app.use(express.json())
+
+const apiLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 50, standardHeaders: true, legacyHeaders: false })
+app.use('/api/', apiLimiter)
+
+const webhookLimiter = rateLimit({ windowMs: 60 * 1000, max: 20, standardHeaders: true, legacyHeaders: false })
+app.use('/api/paydunya/webhook', webhookLimiter)
 
 function formatXOF(n) {
   return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF', maximumFractionDigits: 0 }).format(n)

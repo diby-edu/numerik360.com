@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://numerik360.com/sitemap.xml

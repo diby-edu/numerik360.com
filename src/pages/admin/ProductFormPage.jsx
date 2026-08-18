@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
+import DOMPurify from 'dompurify'
 import { supabase } from '../../lib/supabase'
 import { generateProductDescription, generateProductSEO } from '../../lib/openai'
 import RichTextEditor from '../../components/admin/RichTextEditor'
@@ -1110,7 +1111,7 @@ export default function ProductFormPage() {
                 {form.description && form.description !== '<p></p>' ? (
                   <div
                     className="prose prose-sm max-w-none text-gray-600 border-t border-gray-100 pt-4"
-                    dangerouslySetInnerHTML={{ __html: form.description }}
+                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(form.description) }}
                   />
                 ) : (
                   <p className="text-sm text-gray-400 italic border-t border-gray-100 pt-4">Aucune description.</p>

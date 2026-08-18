@@ -30,15 +30,6 @@ export default function Navbar() {
     setSearchVal('')
   }
 
-  const { data: shopName = 'Boutique' } = useQuery({
-    queryKey: ['shop-name'],
-    queryFn: async () => {
-      const { data } = await supabase.from('settings').select('value').eq('key', 'shop_name').single()
-      return data?.value || 'Boutique'
-    },
-    staleTime: 60000,
-  })
-
   const { data: categories = [] } = useQuery({
     queryKey: ['categories-nav'],
     queryFn: async () => {

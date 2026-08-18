@@ -271,6 +271,8 @@ function SliderHero({ title, subtitle, slides }) {
           key={idx}
           src={url}
           alt=""
+          loading={idx === 0 ? 'eager' : 'lazy'}
+          decoding="async"
           className="absolute inset-0 w-full h-full object-cover transition-opacity duration-500"
           style={{ opacity: idx === current ? (transitioning ? 0 : 1) : 0 }}
         />

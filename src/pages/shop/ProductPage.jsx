@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
+import { Helmet } from 'react-helmet-async'
+import DOMPurify from 'dompurify'
 import { supabase } from '../../lib/supabase'
 import Navbar from '../../components/shop/Navbar'
 import Footer from '../../components/shop/Footer'
@@ -340,7 +342,7 @@ export default function ProductPage() {
             {product.description && (
               <div
                 className="prose prose-sm max-w-none text-gray-600 mb-6 border-t border-gray-100 pt-5"
-                dangerouslySetInnerHTML={{ __html: product.description }}
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(product.description) }}
               />
             )}
 
@@ -377,7 +379,7 @@ export default function ProductPage() {
                         {selectedVariant.description && (
                           <div
                             className="prose prose-sm max-w-none text-gray-600 [&_p]:m-0 [&_ul]:mt-1 [&_ul]:mb-0 [&_li]:m-0"
-                            dangerouslySetInnerHTML={{ __html: selectedVariant.description }}
+                            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(selectedVariant.description) }}
                           />
                         )}
                       </div>

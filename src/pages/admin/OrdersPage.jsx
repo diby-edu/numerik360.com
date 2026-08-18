@@ -71,6 +71,7 @@ export default function OrdersPage() {
   // ── Commandes physiques ──
   const { data: physicalOrders = [], isLoading: loadingPhys } = useQuery({
     queryKey: ['orders-physical', filterStatus],
+    staleTime: 30000,
     enabled: mainTab === 'physical',
     queryFn: async () => {
       let q = supabase.from('orders').select('*').order('created_at', { ascending: false })
@@ -85,6 +86,7 @@ export default function OrdersPage() {
   // ── Commandes numériques ──
   const { data: digitalOrders = [], isLoading: loadingDigital } = useQuery({
     queryKey: ['orders-digital', filterStatus],
+    staleTime: 30000,
     enabled: mainTab === 'digital',
     queryFn: async () => {
       let q = supabase.from('orders').select('*').eq('order_type', 'digital').order('created_at', { ascending: false })
@@ -98,6 +100,7 @@ export default function OrdersPage() {
   // ── Demandes service ──
   const { data: serviceRequests = [], isLoading: loadingSR } = useQuery({
     queryKey: ['service-requests', filterStatus],
+    staleTime: 30000,
     enabled: mainTab === 'service',
     queryFn: async () => {
       let q = supabase.from('service_requests').select('*').order('created_at', { ascending: false })
