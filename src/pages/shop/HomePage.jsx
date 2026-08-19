@@ -140,11 +140,13 @@ export default function HomePage() {
   const { data: stats } = useQuery({
     queryKey: ['shop-stats'],
     queryFn: async () => {
-      const [{ count: products }, { count: orders }] = await Promise.all([
+      // Le nombre de ventes passe par une fonction (aucune PII exposée),
+      // les lignes de commandes ne sont plus lisibles par les visiteurs.
+      const [{ count: products }, { data: paidOrders }] = await Promise.all([
         supabase.from('products').select('id', { count: 'exact', head: true }).eq('is_active', true),
-        supabase.from('orders').select('id', { count: 'exact', head: true }).eq('payment_status', 'paid'),
+        supabase.rpc('paid_orders_count'),
       ])
-      return { products: products ?? 0, orders: orders ?? 0 }
+      return { products: products ?? 0, orders: paidOrders ?? 0 }
     },
   })
 
