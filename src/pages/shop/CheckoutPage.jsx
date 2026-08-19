@@ -138,35 +138,35 @@ export default function CheckoutPage() {
     setLoading(true)
 
     try {
+      // Le serveur recalcule les prix : on n'envoie que l'identité + la quantité
       const orderItems = items.map(({ product, quantity, variant }) => ({
         id: product.id,
-        name: product.name,
         variant_id: variant?.id ?? null,
+        name: product.name,
         variant_name: variant?.name ?? null,
-        price: variant?.price ?? (product.promo_price && product.promo_price < product.price ? product.promo_price : product.price),
         quantity,
       }))
 
-      // 1. Créer la commande dans Supabase
-      const payload = {
-        customer_name: form.name.trim(),
-        customer_email: form.email.trim() || null,
-        customer_phone: form.phone.trim(),
-        customer_address: form.address.trim(),
-        items: orderItems,
-        total,
-        payment_method: paymentMethod,
-        payment_status: paymentMethod === 'paydunya' ? 'pending' : 'cod',
-        status: 'pending',
-        ...(user ? { user_id: user.id } : {}),
-      }
-
-      const { data: order, error: orderError } = await supabase
-        .from('orders')
-        .insert(payload)
-        .select('id')
-        .single()
-      if (orderError) throw orderError
+      // 1. Créer la commande côté serveur (invité ou connecté)
+      const { data: { session } } = await supabase.auth.getSession()
+      const createRes = await fetch('/api/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+        },
+        body: JSON.stringify({
+          items: orderItems,
+          customer_name: form.name.trim(),
+          customer_email: form.email.trim() || null,
+          customer_phone: form.phone.trim(),
+          customer_address: allNonPhysical ? '' : form.address.trim(),
+          payment_method: paymentMethod,
+        }),
+      })
+      const created = await createRes.json()
+      if (!createRes.ok) throw new Error(created.error || 'Erreur lors de la création de la commande. Réessayez.')
+      const order = { id: created.orderId }
 
       // 2a. PayDunya → rediriger vers la page de paiement
       if (paymentMethod === 'paydunya') {
@@ -213,11 +213,11 @@ export default function CheckoutPage() {
         return
       }
 
-      // 2b. Livraison → envoyer emails + page succès (non-bloquant)
+      // 2b. Livraison → envoyer emails + page succès (non-bloquant, le serveur relit la commande)
       fetch('/api/notify-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ order: { ...payload, id: order.id } }),
+        body: JSON.stringify({ order: { id: order.id } }),
       }).catch(() => {})
 
       clearCart()

@@ -95,6 +95,21 @@ async function requireAdmin(req, res) {
   return null
 }
 
+/* ── Stock : baisse après paiement confirmé (idempotent côté SQL) ── */
+async function decrementStock(orderId) {
+  try {
+    await fetch(`${process.env.SUPABASE_URL}/rest/v1/rpc/decrement_order_stock`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
+        'apikey': process.env.SUPABASE_SERVICE_ROLE_KEY,
+      },
+      body: JSON.stringify({ p_order_id: orderId }),
+    })
+  } catch (e) { console.error('decrementStock', e) }
+}
+
 /* ── PayDunya ── */
 const PD_BASE = process.env.PAYDUNYA_MODE === 'live'
   ? 'https://app.paydunya.com/api/v1'
@@ -368,6 +383,10 @@ app.post('/api/notify-status', async (req, res) => {
     const rows = await sbQuery('GET', `orders?id=eq.${encodeURIComponent(orderId)}&select=*`)
     const order = rows?.[0]
     if (!order) return res.status(404).json({ error: 'Commande introuvable' })
+    // COD : le paiement est confirmé à la livraison -> baisse du stock à ce moment
+    if (newStatus === 'delivered' && order.payment_method !== 'paydunya') {
+      await decrementStock(orderId)
+    }
     if (!order.customer_email) return res.json({ ok: true, skipped: 'no email' })
     const shop = process.env.SHOP_NAME || 'Boutique'
     await sendMail(
@@ -377,6 +396,54 @@ app.post('/api/notify-status', async (req, res) => {
     )
     res.json({ ok: true })
   } catch (e) { console.error(e); res.status(500).json({ error: e.message }) }
+})
+
+/* Création de commande côté serveur (invité ou connecté).
+   Contourne l'anomalie RLS qui bloque l'insertion anonyme dans orders,
+   et le trigger enforce_order_pricing garantit le prix/total côté base. */
+app.post('/api/orders', async (req, res) => {
+  try {
+    const { items, customer_name, customer_email, customer_phone, customer_address, payment_method } = req.body
+
+    if (!Array.isArray(items) || items.length === 0) return res.status(400).json({ error: 'Panier vide' })
+    if (!customer_name || !customer_phone) return res.status(400).json({ error: 'Nom et téléphone requis' })
+    if (!['cod', 'paydunya'].includes(payment_method)) return res.status(400).json({ error: 'Mode de paiement invalide' })
+
+    // items : on ne garde que l'identité + la quantité ; le prix est (re)calculé par le trigger
+    const orderItems = []
+    for (const i of items) {
+      if (!isUuid(i.id)) return res.status(400).json({ error: 'Produit invalide' })
+      orderItems.push({
+        id: i.id,
+        variant_id: isUuid(i.variant_id) ? i.variant_id : null,
+        name: String(i.name ?? '').slice(0, 200),
+        variant_name: i.variant_name ? String(i.variant_name).slice(0, 200) : null,
+        quantity: Math.max(parseInt(i.quantity, 10) || 1, 1),
+        price: 0, // recalculé par enforce_order_pricing
+      })
+    }
+
+    // Utilisateur optionnel : si un JWT valide est fourni, on lie la commande au compte
+    const user = await getUserFromToken(req)
+
+    const payload = {
+      customer_name: String(customer_name).slice(0, 200),
+      customer_email: customer_email ? String(customer_email).slice(0, 200) : null,
+      customer_phone: String(customer_phone).slice(0, 50),
+      customer_address: customer_address ? String(customer_address).slice(0, 500) : '',
+      items: orderItems,
+      total: 0, // recalculé par enforce_order_pricing
+      payment_method,
+      payment_status: payment_method === 'paydunya' ? 'pending' : 'cod',
+      status: 'pending',
+      ...(user?.id ? { user_id: user.id } : {}),
+    }
+
+    const rows = await sbQuery('POST', 'orders', payload)
+    const order = Array.isArray(rows) ? rows[0] : rows
+    if (!order?.id) return res.status(500).json({ error: 'Création de la commande impossible' })
+    res.json({ orderId: order.id, total: order.total })
+  } catch (e) { console.error('create order', e); res.status(500).json({ error: e.message }) }
 })
 
 /* PayDunya : créer facture */
@@ -428,6 +495,8 @@ app.post('/api/paydunya-webhook', async (req, res) => {
       return res.status(400).json({ error: 'Montant payé insuffisant' })
     }
     await sbQuery('PATCH', `orders?id=eq.${encodeURIComponent(order.id)}`, { payment_status: 'paid', status: 'confirmed' })
+    // Paiement en ligne confirmé -> baisse du stock (une seule fois)
+    await decrementStock(order.id)
     const shop = process.env.SHOP_NAME || 'Boutique'
     await Promise.all([
       order.customer_email && sendMail(order.customer_email, `Paiement confirmé — ${shop}`, tplConfirm({ ...order, payment_method: 'paydunya' })),
