@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import DOMPurify from 'dompurify'
 import { supabase } from '../../lib/supabase'
 import { generateProductDescription, generateProductSEO } from '../../lib/openai'
+import { optimizeImage } from '../../lib/imageOptimizer'
 import RichTextEditor from '../../components/admin/RichTextEditor'
 
 function slugify(text) {
@@ -295,9 +296,11 @@ export default function ProductFormPage() {
       // Upload images
       const newImagePaths = []
       for (const file of images) {
-        const ext = file.name.split('.').pop()
+        // Recadrage carré + WebP (allège ~90%, rendu uniforme)
+        const optimized = await optimizeImage(file)
+        const ext = optimized.name.split('.').pop()
         const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
-        const { error: uploadError } = await supabase.storage.from('products').upload(path, file, { cacheControl: '3600', upsert: false })
+        const { error: uploadError } = await supabase.storage.from('products').upload(path, optimized, { cacheControl: '3600', upsert: false })
         if (uploadError) throw uploadError
         newImagePaths.push(path)
       }
