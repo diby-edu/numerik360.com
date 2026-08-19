@@ -2,15 +2,12 @@
 -- REFONTE ADMIN (ARC-09) — 2026-08-19
 --
 -- Remplace l'email admin codé en dur dans 20 policies par une fonction
--- centralisée public.is_admin(). L'email reste comme FILET DE SÉCURITÉ
--- à l'intérieur de la fonction (un seul endroit au lieu de 20).
+-- centralisée public.is_admin(), qui ne s'appuie QUE sur le drapeau
+-- profiles.is_admin (protégé par le trigger anti-escalade SEC-05).
+-- Aucune donnée personnelle (email) codée en dur.
 --
--- Sûr : is_admin() = (profiles.is_admin) OU (email admin). Les nouvelles
--- policies accordent donc AU MOINS le même accès qu'avant. Aucun risque
--- de blocage pour konointer (is_admin=true ET email admin).
---
--- Pour ajouter un admin plus tard : passer profiles.is_admin à true.
--- Pour retirer l'email un jour : éditer uniquement cette fonction.
+-- Pour nommer/retirer un admin : passer profiles.is_admin à true/false
+-- dans Supabase (SQL Editor). Aucune modification de code nécessaire.
 -- =====================================================================
 
 begin;
@@ -22,10 +19,10 @@ stable
 security definer
 set search_path = public
 as $$
-  select coalesce(
-    (select p.is_admin from public.profiles p where p.id = auth.uid()),
-    false
-  ) or coalesce(auth.email() = 'konointer@gmail.com', false);
+  -- Admin = drapeau profiles.is_admin (protégé par le trigger anti-escalade
+  -- SEC-05). Aucune donnée personnelle en dur. Nommer un admin = passer ce
+  -- drapeau à true dans Supabase.
+  select coalesce((select p.is_admin from public.profiles p where p.id = auth.uid()), false);
 $$;
 
 -- ── attributes ──
