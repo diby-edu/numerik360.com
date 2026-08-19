@@ -13,7 +13,7 @@ async function fetchHeroSettings() {
 function DefaultHero({ title, subtitle }) {
   return (
     <section
-      className="text-white"
+      className="text-white overflow-hidden"
       style={{ background: 'linear-gradient(135deg, var(--hero-from), var(--hero-to))' }}
     >
       <div className="max-w-6xl mx-auto px-4 py-24 text-center">

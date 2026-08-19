@@ -10,11 +10,19 @@ app.use(helmet())
 app.use(cors({ origin: 'https://numerik360.com', methods: ['GET', 'POST'] }))
 app.use(express.json())
 
-const apiLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 50, standardHeaders: true, legacyHeaders: false })
-app.use('/api/', apiLimiter)
+// OPS-20 : le webhook PayDunya a son propre limiteur, enregistré AVANT le
+// limiteur général et exclu de celui-ci, pour ne jamais renvoyer 429 à PayDunya.
+const webhookLimiter = rateLimit({ windowMs: 60 * 1000, max: 60, standardHeaders: true, legacyHeaders: false })
+app.use('/api/paydunya-webhook', webhookLimiter)
 
-const webhookLimiter = rateLimit({ windowMs: 60 * 1000, max: 20, standardHeaders: true, legacyHeaders: false })
-app.use('/api/paydunya/webhook', webhookLimiter)
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 50,
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => req.originalUrl.startsWith('/api/paydunya-webhook'),
+})
+app.use('/api/', apiLimiter)
 
 function formatXOF(n) {
   return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF', maximumFractionDigits: 0 }).format(n)
@@ -52,6 +60,41 @@ async function sbQuery(method, path, body) {
   return text ? JSON.parse(text) : null
 }
 
+/* ── SEC-13 : échappement HTML pour les gabarits d'email ── */
+function esc(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+  ))
+}
+
+/* ── SEC-07 : validation UUID ── */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+function isUuid(v) { return typeof v === 'string' && UUID_RE.test(v) }
+
+/* ── SEC-04/06 : authentification admin (vérifie le JWT Supabase) ── */
+async function getUserFromToken(req) {
+  const h = req.headers.authorization || ''
+  const token = h.startsWith('Bearer ') ? h.slice(7) : null
+  if (!token) return null
+  try {
+    const r = await fetch(`${process.env.SUPABASE_URL}/auth/v1/user`, {
+      headers: { apikey: process.env.SUPABASE_SERVICE_ROLE_KEY, Authorization: `Bearer ${token}` },
+    })
+    if (!r.ok) return null
+    return await r.json()
+  } catch { return null }
+}
+
+async function requireAdmin(req, res) {
+  const user = await getUserFromToken(req)
+  if (!user?.email) { res.status(401).json({ error: 'Authentification requise' }); return null }
+  if (user.email === 'konointer@gmail.com') return user
+  const rows = await sbQuery('GET', `profiles?id=eq.${encodeURIComponent(user.id)}&select=is_admin`)
+  if (rows?.[0]?.is_admin === true) return user
+  res.status(403).json({ error: 'Accès réservé à l\'administrateur' })
+  return null
+}
+
 /* ── PayDunya ── */
 const PD_BASE = process.env.PAYDUNYA_MODE === 'live'
   ? 'https://app.paydunya.com/api/v1'
@@ -85,10 +128,10 @@ async function getSignedUrl(bucket, path, expiresIn = 604800) {
 }
 
 async function claimCode(productId, orderId) {
-  const rows = await sbQuery('GET', `product_codes?product_id=eq.${productId}&order_id=is.null&select=id,code&limit=1`)
+  const rows = await sbQuery('GET', `product_codes?product_id=eq.${encodeURIComponent(productId)}&order_id=is.null&select=id,code&limit=1`)
   if (!rows?.length) return null
   const { id, code } = rows[0]
-  await sbQuery('PATCH', `product_codes?id=eq.${id}`, { order_id: orderId, used_at: new Date().toISOString() })
+  await sbQuery('PATCH', `product_codes?id=eq.${encodeURIComponent(id)}`, { order_id: orderId, used_at: new Date().toISOString() })
   return code
 }
 
@@ -97,13 +140,13 @@ function tplDigital(customerName, deliveries) {
   const rows = deliveries.map(d => {
     if (d.type === 'codes') {
       return `<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:16px;margin:12px 0">
-        <p style="margin:0 0 4px;font-size:12px;color:#16a34a;font-weight:600">PRODUIT : ${d.name}</p>
+        <p style="margin:0 0 4px;font-size:12px;color:#16a34a;font-weight:600">PRODUIT : ${esc(d.name)}</p>
         <p style="margin:0 0 6px;font-size:12px;color:#64748b">Votre code d'activation :</p>
-        <p style="margin:0;font-size:20px;font-weight:700;letter-spacing:2px;color:#1e293b;font-family:monospace">${d.value}</p>
+        <p style="margin:0;font-size:20px;font-weight:700;letter-spacing:2px;color:#1e293b;font-family:monospace">${esc(d.value)}</p>
       </div>`
     }
     return `<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:16px;margin:12px 0">
-      <p style="margin:0 0 4px;font-size:12px;color:#2563eb;font-weight:600">PRODUIT : ${d.name}</p>
+      <p style="margin:0 0 4px;font-size:12px;color:#2563eb;font-weight:600">PRODUIT : ${esc(d.name)}</p>
       <p style="margin:0 0 8px;font-size:12px;color:#64748b">Téléchargez votre fichier (lien valable 7 jours) :</p>
       <a href="${d.value}" style="display:inline-block;background:#2563EB;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px">Télécharger</a>
     </div>`
@@ -115,7 +158,7 @@ function tplDigital(customerName, deliveries) {
       <p style="color:rgba(255,255,255,.75);margin:6px 0 0">Livraison de votre commande numérique</p>
     </div>
     <div style="padding:28px">
-      <p style="font-size:16px">Bonjour <strong>${customerName}</strong>,</p>
+      <p style="font-size:16px">Bonjour <strong>${esc(customerName)}</strong>,</p>
       <p style="color:#64748b">Voici vos produits numériques :</p>
       ${rows}
       <p style="color:#64748b;font-size:13px;margin-top:20px">Si vous avez des questions, n'hésitez pas à nous contacter. Merci pour votre confiance !</p>
@@ -129,7 +172,8 @@ async function deliverDigitalItems(order) {
   const digitalDeliveries = []
   for (const item of order.items) {
     // Fetch product to get digital delivery info
-    const products = await sbQuery('GET', `products?id=eq.${item.id}&select=product_type,digital_delivery_type,digital_file_path`)
+    if (!isUuid(item.id)) continue
+    const products = await sbQuery('GET', `products?id=eq.${encodeURIComponent(item.id)}&select=product_type,digital_delivery_type,digital_file_path`)
     const product = products?.[0]
     if (!product || product.product_type !== 'digital') continue
 
@@ -142,7 +186,8 @@ async function deliverDigitalItems(order) {
         }
       }
     } else if (product.digital_delivery_type === 'file' && product.digital_file_path) {
-      const url = await getSignedUrl('products', product.digital_file_path)
+      // SEC-01 : les fichiers numériques vivent dans le bucket privé "digital"
+      const url = await getSignedUrl('digital', product.digital_file_path)
       if (url) digitalDeliveries.push({ type: 'file', name: item.name, value: url })
     }
   }
@@ -161,7 +206,7 @@ function tplConfirm(o) {
   const shop = process.env.SHOP_NAME || 'Boutique'
   const rows = (o.items || []).map(i =>
     `<tr>
-      <td style="padding:8px;border-bottom:1px solid #eee">${i.name}</td>
+      <td style="padding:8px;border-bottom:1px solid #eee">${esc(i.name)}</td>
       <td style="padding:8px;border-bottom:1px solid #eee;text-align:center">x${i.quantity}</td>
       <td style="padding:8px;border-bottom:1px solid #eee;text-align:right">${formatXOF(i.price * i.quantity)}</td>
     </tr>`
@@ -173,7 +218,7 @@ function tplConfirm(o) {
       <p style="color:rgba(255,255,255,.75);margin:6px 0 0">Confirmation de commande</p>
     </div>
     <div style="padding:28px">
-      <p style="font-size:16px">Bonjour <strong>${o.customer_name}</strong>,</p>
+      <p style="font-size:16px">Bonjour <strong>${esc(o.customer_name)}</strong>,</p>
       <p style="color:#64748b">Merci pour votre commande !</p>
       <table style="width:100%;border-collapse:collapse;margin:20px 0;font-size:14px">
         <thead><tr style="background:#f8fafc">
@@ -189,13 +234,13 @@ function tplConfirm(o) {
       </table>
       <div style="background:#eff6ff;border-radius:8px;padding:14px;margin:10px 0;font-size:14px">
         <p style="margin:0 0 4px;color:#64748b;font-size:12px">LIVRAISON À</p>
-        <p style="margin:0;font-weight:500">${o.customer_address}</p>
+        <p style="margin:0;font-weight:500">${esc(o.customer_address)}</p>
       </div>
       <div style="background:#eff6ff;border-radius:8px;padding:14px;margin:10px 0;font-size:14px">
         <p style="margin:0 0 4px;color:#64748b;font-size:12px">PAIEMENT</p>
         <p style="margin:0;font-weight:500">${o.payment_method === 'delivery' ? 'À la livraison' : 'PayDunya'}</p>
       </div>
-      <p style="color:#64748b;font-size:14px">Nous vous contacterons au <strong>${o.customer_phone}</strong>. Merci de nous faire confiance !</p>
+      <p style="color:#64748b;font-size:14px">Nous vous contacterons au <strong>${esc(o.customer_phone)}</strong>. Merci de nous faire confiance !</p>
     </div>
     <div style="background:#f8fafc;padding:14px;text-align:center;font-size:12px;color:#999">© ${new Date().getFullYear()} ${shop}</div>
   </div></body></html>`
@@ -203,7 +248,7 @@ function tplConfirm(o) {
 
 function tplAdmin(o) {
   const shop = process.env.SHOP_NAME || 'Boutique'
-  const items = (o.items || []).map(i => `• ${i.name} x${i.quantity} — ${formatXOF(i.price * i.quantity)}`).join('<br>')
+  const items = (o.items || []).map(i => `• ${esc(i.name)} x${i.quantity} — ${formatXOF(i.price * i.quantity)}`).join('<br>')
   return `<!DOCTYPE html><html><body style="font-family:Arial,sans-serif;background:#f5f5f5;padding:20px">
   <div style="max-width:600px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08)">
     <div style="background:#1e293b;padding:24px">
@@ -211,10 +256,10 @@ function tplAdmin(o) {
     </div>
     <div style="padding:28px;font-size:14px">
       <table style="width:100%">
-        <tr><td style="color:#64748b;padding:6px 0;width:130px">Client</td><td style="font-weight:600">${o.customer_name}</td></tr>
-        <tr><td style="color:#64748b;padding:6px 0">Email</td><td>${o.customer_email || '—'}</td></tr>
-        <tr><td style="color:#64748b;padding:6px 0">Téléphone</td><td>${o.customer_phone}</td></tr>
-        <tr><td style="color:#64748b;padding:6px 0">Adresse</td><td>${o.customer_address}</td></tr>
+        <tr><td style="color:#64748b;padding:6px 0;width:130px">Client</td><td style="font-weight:600">${esc(o.customer_name)}</td></tr>
+        <tr><td style="color:#64748b;padding:6px 0">Email</td><td>${esc(o.customer_email) || '—'}</td></tr>
+        <tr><td style="color:#64748b;padding:6px 0">Téléphone</td><td>${esc(o.customer_phone)}</td></tr>
+        <tr><td style="color:#64748b;padding:6px 0">Adresse</td><td>${esc(o.customer_address)}</td></tr>
         <tr><td style="color:#64748b;padding:6px 0">Paiement</td><td>${o.payment_method === 'delivery' ? 'À la livraison' : 'PayDunya'}</td></tr>
         <tr><td style="color:#64748b;padding:6px 0">Total</td><td style="font-weight:700;color:#2563EB;font-size:16px">${formatXOF(o.total)}</td></tr>
       </table>
@@ -243,7 +288,7 @@ function tplStatus(o, st) {
       <h1 style="color:#fff;margin:8px 0 0;font-size:20px">${i.t}</h1>
     </div>
     <div style="padding:28px">
-      <p style="font-size:16px">Bonjour <strong>${o.customer_name}</strong>,</p>
+      <p style="font-size:16px">Bonjour <strong>${esc(o.customer_name)}</strong>,</p>
       <p style="color:#64748b">${i.m}</p>
       <div style="background:#eff6ff;border-radius:8px;padding:16px;margin:20px 0;text-align:center">
         <p style="margin:0 0 4px;color:#64748b;font-size:12px">MONTANT</p>
@@ -259,7 +304,11 @@ function tplStatus(o, st) {
 
 app.post('/api/openai', async (req, res) => {
   try {
-    const { prompt, maxTokens = 300 } = req.body
+    // SEC-04 : réservé à l'admin, sinon proxy OpenAI ouvert à tous
+    if (!(await requireAdmin(req, res))) return
+    const { prompt } = req.body
+    if (!prompt || typeof prompt !== 'string') return res.status(400).json({ error: 'prompt manquant' })
+    const maxTokens = Math.min(parseInt(req.body.maxTokens, 10) || 300, 800)
     const r = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.OPENAI_API_KEY}` },
@@ -271,6 +320,7 @@ app.post('/api/openai', async (req, res) => {
 })
 
 app.post('/api/generate-description', async (req, res) => {
+  if (!(await requireAdmin(req, res))) return
   const { productName, keywords } = req.body
   const prompt = `Rédige une description produit commerciale courte (3-4 phrases), en français, pour : "${productName}". Mots-clés : ${keywords}. Style : direct, convaincant, sans bullet points, sans titre.`
   try {
@@ -288,10 +338,10 @@ app.post('/api/generate-description', async (req, res) => {
 app.post('/api/notify-order', async (req, res) => {
   try {
     const { order: orderBody } = req.body
-    if (!orderBody?.id) return res.status(400).json({ error: 'order.id manquant' })
+    if (!isUuid(orderBody?.id)) return res.status(400).json({ error: 'order.id invalide' })
 
     // Vérifier que la commande existe vraiment en base
-    const rows = await sbQuery('GET', `orders?id=eq.${orderBody.id}&select=*`)
+    const rows = await sbQuery('GET', `orders?id=eq.${encodeURIComponent(orderBody.id)}&select=*`)
     const order = rows?.[0]
     if (!order) return res.status(404).json({ error: 'Commande introuvable' })
 
@@ -300,10 +350,8 @@ app.post('/api/notify-order', async (req, res) => {
       order.customer_email && sendMail(order.customer_email, `Confirmation de commande — ${shop}`, tplConfirm(order)),
       sendMail(process.env.ADMIN_EMAIL, `Nouvelle commande — ${shop}`, tplAdmin(order)),
     ])
-    // Livraison numérique immédiate pour les commandes paiement à la livraison (cod)
-    if (order.payment_method === 'cod') {
-      await deliverDigitalItems(order)
-    }
+    // SEC-03 : la livraison numérique ne part JAMAIS avant paiement.
+    // Elle est déclenchée uniquement par le webhook PayDunya (payment_status=paid).
     res.json({ ok: true })
   } catch (e) { console.error(e); res.status(500).json({ error: e.message }) }
 })
@@ -311,13 +359,20 @@ app.post('/api/notify-order', async (req, res) => {
 /* Emails : changement statut */
 app.post('/api/notify-status', async (req, res) => {
   try {
-    const { order, newStatus } = req.body
+    // SEC-06 : réservé à l'admin, et on relit la commande en base
+    // (ne jamais faire confiance au corps de la requête pour l'email/le contenu).
+    if (!(await requireAdmin(req, res))) return
+    const { orderId, newStatus } = req.body
+    const labels = { confirmed: 'confirmée', shipped: 'expédiée', delivered: 'livrée', cancelled: 'annulée', pending: 'en attente' }
+    if (!isUuid(orderId) || !labels[newStatus]) return res.status(400).json({ error: 'Paramètres invalides' })
+    const rows = await sbQuery('GET', `orders?id=eq.${encodeURIComponent(orderId)}&select=*`)
+    const order = rows?.[0]
+    if (!order) return res.status(404).json({ error: 'Commande introuvable' })
     if (!order.customer_email) return res.json({ ok: true, skipped: 'no email' })
     const shop = process.env.SHOP_NAME || 'Boutique'
-    const labels = { confirmed: 'confirmée', shipped: 'expédiée', delivered: 'livrée', cancelled: 'annulée' }
     await sendMail(
       order.customer_email,
-      `Votre commande a été ${labels[newStatus] || newStatus} — ${shop}`,
+      `Votre commande a été ${labels[newStatus]} — ${shop}`,
       tplStatus(order, newStatus)
     )
     res.json({ ok: true })
@@ -328,10 +383,10 @@ app.post('/api/notify-status', async (req, res) => {
 app.post('/api/paydunya/checkout', async (req, res) => {
   try {
     const { orderId, customerEmail } = req.body
-    if (!orderId) return res.status(400).json({ error: 'orderId manquant' })
+    if (!isUuid(orderId)) return res.status(400).json({ error: 'orderId invalide' })
 
     // Lire le total depuis la DB — ne pas faire confiance au client
-    const rows = await sbQuery('GET', `orders?id=eq.${orderId}&select=id,total,customer_email`)
+    const rows = await sbQuery('GET', `orders?id=eq.${encodeURIComponent(orderId)}&select=id,total,customer_email`)
     const dbOrder = rows?.[0]
     if (!dbOrder) return res.status(404).json({ error: 'Commande introuvable' })
 
@@ -349,7 +404,7 @@ app.post('/api/paydunya/checkout', async (req, res) => {
     const r = await fetch(`${PD_BASE}/checkout-invoice/create`, { method: 'POST', headers: PD_H, body: JSON.stringify(body) })
     const d = await r.json()
     if (d.response_code !== '00') return res.status(400).json({ error: d.description || 'Erreur PayDunya' })
-    await sbQuery('PATCH', `orders?id=eq.${orderId}`, { paydunya_token: d.token, payment_status: 'pending' })
+    await sbQuery('PATCH', `orders?id=eq.${encodeURIComponent(orderId)}`, { paydunya_token: d.token, payment_status: 'pending' })
     res.json({ invoice_url: d.response_text, token: d.token })
   } catch (e) { console.error(e); res.status(500).json({ error: e.message }) }
 })
@@ -358,12 +413,12 @@ app.post('/api/paydunya/checkout', async (req, res) => {
 app.post('/api/paydunya-webhook', async (req, res) => {
   try {
     const token = req.body?.data?.invoice?.token
-    if (!token) return res.status(400).json({ error: 'Token manquant' })
-    const vr = await fetch(`${PD_BASE}/checkout-invoice/confirm/${token}`, { headers: PD_H })
+    if (!token || typeof token !== 'string' || !/^[\w-]{1,120}$/.test(token)) return res.status(400).json({ error: 'Token manquant' })
+    const vr = await fetch(`${PD_BASE}/checkout-invoice/confirm/${encodeURIComponent(token)}`, { headers: PD_H })
     const vd = await vr.json()
     if (vd.response_code !== '00') return res.status(400).json({ error: 'Vérification échouée' })
     if (vd.invoice?.status !== 'completed') return res.json({ ok: true, status: vd.invoice?.status })
-    const orders = await sbQuery('GET', `orders?paydunya_token=eq.${token}&select=*`)
+    const orders = await sbQuery('GET', `orders?paydunya_token=eq.${encodeURIComponent(token)}&select=*`)
     const order = orders?.[0]
     if (!order) return res.status(404).json({ error: 'Commande introuvable' })
     // Vérifier que le montant confirmé par PayDunya correspond au total réel de la commande
@@ -372,7 +427,7 @@ app.post('/api/paydunya-webhook', async (req, res) => {
       console.error(`PayDunya montant insuffisant: payé ${paidAmount} pour commande ${order.id} (total: ${order.total})`)
       return res.status(400).json({ error: 'Montant payé insuffisant' })
     }
-    await sbQuery('PATCH', `orders?id=eq.${order.id}`, { payment_status: 'paid', status: 'confirmed' })
+    await sbQuery('PATCH', `orders?id=eq.${encodeURIComponent(order.id)}`, { payment_status: 'paid', status: 'confirmed' })
     const shop = process.env.SHOP_NAME || 'Boutique'
     await Promise.all([
       order.customer_email && sendMail(order.customer_email, `Paiement confirmé — ${shop}`, tplConfirm({ ...order, payment_method: 'paydunya' })),
@@ -390,10 +445,10 @@ app.post('/api/contact', async (req, res) => {
     const adminEmail = process.env.ADMIN_EMAIL || process.env.SMTP_USER
     await sendMail(
       adminEmail,
-      `[Contact] ${subject || 'Message depuis le site'}`,
-      `<p><strong>Nom :</strong> ${name}</p>
-       <p><strong>Email :</strong> <a href="mailto:${email}">${email}</a></p>
-       <p><strong>Message :</strong><br>${message.replace(/\n/g, '<br>')}</p>`
+      `[Contact] ${esc(subject || 'Message depuis le site')}`,
+      `<p><strong>Nom :</strong> ${esc(name)}</p>
+       <p><strong>Email :</strong> <a href="mailto:${encodeURIComponent(email || '')}">${esc(email)}</a></p>
+       <p><strong>Message :</strong><br>${esc(message).replace(/\n/g, '<br>')}</p>`
     )
     res.json({ ok: true })
   } catch (e) {

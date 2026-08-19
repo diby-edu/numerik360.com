@@ -1,4 +1,9 @@
 User-agent: *
 Allow: /
+Disallow: /admin/
+Disallow: /admin
+Disallow: /mon-compte/
+Disallow: /checkout
+Disallow: /commande-confirmee
 
 Sitemap: https://numerik360.com/sitemap.xml

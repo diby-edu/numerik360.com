@@ -7,8 +7,8 @@ function itemKey(productId, variantId) {
   return `${productId}__${variantId ?? ''}`
 }
 
-// Verrou pour éviter les appels _sync concurrents
-let _syncLock = false
+// File d'attente : les syncs sont sérialisés (aucun abandonné, dernier état toujours persisté)
+let _syncChain = Promise.resolve()
 
 const useCartStore = create(
   persist(
@@ -67,15 +67,14 @@ const useCartStore = create(
       getCount: () =>
         get().items.reduce((sum, i) => sum + i.quantity, 0),
 
-      _sync: async () => {
-        if (_syncLock) return
-        _syncLock = true
-        try {
+      _sync: () => {
+        // Chaîner sur la sync précédente : les écritures rapides successives
+        // ne sont jamais abandonnées, et c'est toujours le dernier état qui gagne.
+        _syncChain = _syncChain.then(async () => {
           const { data: { user } } = await supabase.auth.getUser()
           if (!user) return
           await supabase.from('cart_items').delete().eq('user_id', user.id)
           // Lire les items APRÈS le delete pour éviter d'insérer un snapshot stale
-          // si clearCart() a tourné en parallèle pendant l'attente du getUser()
           const items = get().items
           if (items.length > 0) {
             await supabase.from('cart_items').insert(
@@ -87,9 +86,8 @@ const useCartStore = create(
               }))
             )
           }
-        } finally {
-          _syncLock = false
-        }
+        }).catch(() => {})
+        return _syncChain
       },
 
       loadFromSupabase: async () => {
@@ -105,8 +103,11 @@ const useCartStore = create(
           return
         }
 
-        const local = get().items
-        const remote = data.map(row => ({ product: row.product, quantity: row.quantity, variant: row.variant ?? null }))
+        // Ignorer les lignes dont le produit a été supprimé (sinon crash sur .id)
+        const local = get().items.filter(i => i?.product?.id)
+        const remote = data
+          .filter(row => row.product?.id)
+          .map(row => ({ product: row.product, quantity: row.quantity, variant: row.variant ?? null }))
         // Déduplication par clé composite productId__variantId
         const localKeys = new Set(local.map(i => itemKey(i.product.id, i.variant?.id)))
         const remoteOnlyItems = remote.filter(r => !localKeys.has(itemKey(r.product.id, r.variant?.id)))

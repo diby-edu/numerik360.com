@@ -75,7 +75,8 @@ export default function Navbar() {
             </form>
           </div>
         )}
-        <div className="w-full px-6 h-16 flex items-center relative">
+        {/* Rangée 1 — Logo + icônes */}
+        <div className="w-full px-6 h-16 flex items-center gap-4">
           {/* Gauche — Logo V5 Plasma Ovale */}
           <Link to="/" className="z-10 flex-shrink-0" aria-label="Accueil">
             <div className="logo-v5">
@@ -86,15 +87,6 @@ export default function Navbar() {
               </div>
             </div>
           </Link>
-
-          {/* Centre — Catégories (absolument centré) */}
-          <nav className="hidden md:flex items-center gap-5 text-sm font-medium text-gray-600 absolute left-1/2 -translate-x-1/2 whitespace-nowrap">
-            {categories.map(cat => (
-              <NavLink key={cat.id} to={`/boutique?categorie=${cat.slug}`} className={navLinkClass}>
-                {cat.name}
-              </NavLink>
-            ))}
-          </nav>
 
           {/* Droite — Icônes */}
           <div className="flex items-center gap-3 ml-auto z-10">
@@ -122,28 +114,17 @@ export default function Navbar() {
               )}
             </Link>
 
-            {/* Compte */}
-            {user ? (
-              <Link
-                to="/mon-compte/commandes"
-                className="hidden sm:flex items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-primary transition-colors"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-                Mon compte
-              </Link>
-            ) : (
-              <Link
-                to="/connexion"
-                className="hidden sm:flex text-gray-600 hover:text-primary transition-colors"
-                aria-label="Connexion"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-              </Link>
-            )}
+            {/* Compte — icône cohérente (remplie si connecté, contour si visiteur) */}
+            <Link
+              to={user ? '/mon-compte/commandes' : '/connexion'}
+              className={`hidden sm:flex transition-colors ${user ? 'text-primary hover:text-primary-dark' : 'text-gray-600 hover:text-primary'}`}
+              aria-label={user ? 'Mon compte' : 'Connexion'}
+              title={user ? 'Mon compte' : 'Connexion'}
+            >
+              <svg className="w-5 h-5" fill={user ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+            </Link>
 
             {/* Panier */}
             <Link to="/panier" className="relative flex items-center gap-1.5 text-gray-700 hover:text-primary transition-colors">
@@ -182,6 +163,17 @@ export default function Navbar() {
             </button>
           </div>
         </div>
+
+        {/* Rangée 2 — Catégories (desktop, toujours visibles, jamais de chevauchement) */}
+        {categories.length > 0 && (
+          <nav className="hidden md:flex items-center justify-center flex-wrap gap-x-6 gap-y-1 border-t border-gray-100 px-6 py-2.5 text-sm font-medium text-gray-600">
+            {categories.map(cat => (
+              <NavLink key={cat.id} to={`/boutique?categorie=${cat.slug}`} className={navLinkClass}>
+                {cat.name}
+              </NavLink>
+            ))}
+          </nav>
+        )}
 
         {/* Mobile menu */}
         {menuOpen && (

@@ -117,10 +117,15 @@ export default function OrdersPage() {
       const { error } = await supabase.from('orders').update({ status }).eq('id', id)
       if (error) throw error
       if (order?.customer_email) {
+        // SEC-06 : le serveur exige un JWT admin et relit la commande en base
+        const { data: { session } } = await supabase.auth.getSession()
         await fetch('/api/notify-status', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ order, newStatus: status }),
+          headers: {
+            'Content-Type': 'application/json',
+            ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+          },
+          body: JSON.stringify({ orderId: id, newStatus: status }),
         })
       }
     },

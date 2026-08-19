@@ -47,18 +47,36 @@ const Spinner = () => (
   </div>
 )
 
-function ProtectedAdminRoute({ session, children }) {
-  const [isAdmin, setIsAdmin] = useState(null)
+function useIsAdmin(session) {
+  const [isAdmin, setIsAdmin] = useState(null) // null = en cours
 
   useEffect(() => {
+    let active = true
+    if (session === undefined) { setIsAdmin(null); return }
     if (!session) { setIsAdmin(false); return }
+    setIsAdmin(null)
     supabase.from('profiles').select('is_admin').eq('id', session.user.id).maybeSingle()
-      .then(({ data }) => setIsAdmin(data?.is_admin ?? false))
-  }, [session?.user?.id])
+      .then(({ data }) => { if (active) setIsAdmin(data?.is_admin ?? false) })
+    return () => { active = false }
+  }, [session?.user?.id, session === undefined])
 
+  return isAdmin
+}
+
+function ProtectedAdminRoute({ session, children }) {
+  const isAdmin = useIsAdmin(session)
   if (session === null || isAdmin === false) return <Navigate to="/admin/login" replace />
   if (session === undefined || isAdmin === null) return null
   return children
+}
+
+// BUG-11 : ne rediriger vers le dashboard QUE si l'utilisateur est réellement admin
+// (sinon un client connecté bouclait entre /admin/login et /admin/dashboard).
+function AdminLoginRoute({ session }) {
+  const isAdmin = useIsAdmin(session)
+  if (session === undefined || (session && isAdmin === null)) return null
+  if (session && isAdmin) return <Navigate to="/admin/dashboard" replace />
+  return <AdminLogin />
 }
 
 export default function App() {
@@ -102,9 +120,7 @@ export default function App() {
               </Route>
             </Route>
 
-            <Route path="/admin/login" element={
-              session ? <Navigate to="/admin/dashboard" replace /> : <AdminLogin />
-            } />
+            <Route path="/admin/login" element={<AdminLoginRoute session={session} />} />
             <Route path="/admin" element={
               <ProtectedAdminRoute session={session}>
                 <AdminLayout />

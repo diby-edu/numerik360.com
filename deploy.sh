@@ -8,8 +8,15 @@ API_DIR="/root/numerik360-api"
 
 cd "$SITE_DIR"
 
+# OPS-15 : mémoriser le commit AVANT le pull pour détecter tous les changements
+OLD_REV=$(git rev-parse HEAD)
+
 echo "==> Git pull..."
 git pull origin main
+NEW_REV=$(git rev-parse HEAD)
+
+echo "==> Installation des dépendances (npm ci)..."
+npm ci
 
 echo "==> Build vers dist_new..."
 npm run build -- --outDir dist_new
@@ -22,8 +29,8 @@ mv dist_new dist
 echo "==> Nettoyage..."
 rm -rf dist_old
 
-# Si server-vps.js a été modifié, on met à jour l'API
-if git diff HEAD~1 --name-only 2>/dev/null | grep -q "server-vps.js"; then
+# Si server-vps.js a changé entre l'ancien et le nouveau commit, on met à jour l'API
+if git diff "$OLD_REV" "$NEW_REV" --name-only 2>/dev/null | grep -q "server-vps.js"; then
   echo "==> Mise à jour API Express..."
   cp "$SITE_DIR/server-vps.js" "$API_DIR/server.js"
   pm2 restart numerik360-api

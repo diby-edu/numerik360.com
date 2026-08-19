@@ -26,7 +26,9 @@ const STATUS_LABELS = {
 }
 
 const PAYMENT_LABELS = {
+  cod: 'À la livraison',
   delivery: 'À la livraison',
+  paydunya: 'Paiement en ligne',
   wave: 'Wave',
   orange_money: 'Orange Money',
 }

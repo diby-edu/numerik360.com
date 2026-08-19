@@ -1,8 +1,15 @@
+import { supabase } from './supabase'
+
 async function callOpenAI(prompt, maxTokens = 300) {
   if (import.meta.env.PROD) {
+    // SEC-04 : la route /api/openai exige désormais un JWT admin
+    const { data: { session } } = await supabase.auth.getSession()
     const response = await fetch('/api/openai', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+      },
       body: JSON.stringify({ prompt, maxTokens }),
     })
     if (!response.ok) throw new Error('Erreur lors de la génération')

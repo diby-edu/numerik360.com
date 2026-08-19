@@ -55,10 +55,13 @@ create table if not exists cart_items (
   id uuid primary key default gen_random_uuid(),
   user_id uuid references auth.users(id) on delete cascade not null,
   product_id uuid references products(id) on delete cascade not null,
+  variant_id uuid,
   quantity integer not null default 1,
   created_at timestamptz default now(),
   unique(user_id, product_id, variant_id)
 );
+-- Si la table existait déjà sans la colonne :
+alter table cart_items add column if not exists variant_id uuid;
 
 alter table cart_items enable row level security;
 

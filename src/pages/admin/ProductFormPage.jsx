@@ -308,8 +308,9 @@ export default function ProductFormPage() {
       if (form.product_type === 'digital' && form.digital_delivery_type === 'file' && digitalFile) {
         setDigitalFileUploading(true)
         const ext = digitalFile.name.split('.').pop()
-        const path = `digital/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
-        const { error: uploadError } = await supabase.storage.from('products').upload(path, digitalFile, { upsert: false })
+        // SEC-01 : bucket privé dédié, jamais exposé publiquement
+        const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+        const { error: uploadError } = await supabase.storage.from('digital').upload(path, digitalFile, { upsert: false })
         setDigitalFileUploading(false)
         if (uploadError) throw uploadError
         digitalFilePath = path
