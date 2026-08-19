@@ -13,7 +13,7 @@ create policy "hero_upload_admin"
   to authenticated
   with check (
     bucket_id = 'hero'
-    and auth.email() = 'konointer@gmail.com'
+    and public.is_admin()
   );
 
 -- Lecture publique
@@ -28,7 +28,7 @@ create policy "hero_delete_admin"
   to authenticated
   using (
     bucket_id = 'hero'
-    and auth.email() = 'konointer@gmail.com'
+    and public.is_admin()
   );
 
 -- Valeurs par défaut pour les nouveaux paramètres

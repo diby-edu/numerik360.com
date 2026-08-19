@@ -61,12 +61,12 @@ create policy "categories_lecture_publique"
   to anon, authenticated
   using (true);
 
--- Écriture admin uniquement (konointer@gmail.com)
+-- Écriture admin uniquement (admin, via public.is_admin())
 create policy "categories_ecriture_admin"
   on categories for all
   to authenticated
-  using (auth.email() = 'konointer@gmail.com')
-  with check (auth.email() = 'konointer@gmail.com');
+  using (public.is_admin())
+  with check (public.is_admin());
 
 -- ---- PRODUCTS ----
 
@@ -80,14 +80,14 @@ create policy "products_lecture_publique"
 create policy "products_lecture_admin"
   on products for select
   to authenticated
-  using (auth.email() = 'konointer@gmail.com');
+  using (public.is_admin());
 
 -- Écriture admin uniquement
 create policy "products_ecriture_admin"
   on products for all
   to authenticated
-  using (auth.email() = 'konointer@gmail.com')
-  with check (auth.email() = 'konointer@gmail.com');
+  using (public.is_admin())
+  with check (public.is_admin());
 
 -- ---- ORDERS ----
 
@@ -101,19 +101,19 @@ create policy "orders_insertion_publique"
 create policy "orders_lecture_admin"
   on orders for select
   to authenticated
-  using (auth.email() = 'konointer@gmail.com');
+  using (public.is_admin());
 
 -- Modification admin
 create policy "orders_update_admin"
   on orders for update
   to authenticated
-  using (auth.email() = 'konointer@gmail.com');
+  using (public.is_admin());
 
 -- Suppression admin
 create policy "orders_delete_admin"
   on orders for delete
   to authenticated
-  using (auth.email() = 'konointer@gmail.com');
+  using (public.is_admin());
 
 -- =============================================
 -- STORAGE — Bucket images produits
@@ -133,7 +133,7 @@ create policy "storage_upload_admin"
   to authenticated
   with check (
     bucket_id = 'products'
-    and auth.email() = 'konointer@gmail.com'
+    and public.is_admin()
   );
 
 -- Politique storage : lecture publique
@@ -148,5 +148,5 @@ create policy "storage_delete_admin"
   to authenticated
   using (
     bucket_id = 'products'
-    and auth.email() = 'konointer@gmail.com'
+    and public.is_admin()
   );

@@ -92,8 +92,8 @@ create policy "settings_lecture_publique"
 create policy "settings_ecriture_admin"
   on settings for all
   to authenticated
-  using (auth.email() = 'konointer@gmail.com')
-  with check (auth.email() = 'konointer@gmail.com');
+  using (public.is_admin())
+  with check (public.is_admin());
 
 -- Valeur par défaut : achat invité activé
 insert into settings (key, value) values ('guest_checkout', 'true') on conflict (key) do nothing;

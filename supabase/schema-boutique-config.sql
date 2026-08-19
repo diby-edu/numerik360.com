@@ -20,9 +20,9 @@ create table if not exists testimonials (
 alter table testimonials enable row level security;
 
 create policy "testimonials_select_public" on testimonials for select using (true);
-create policy "testimonials_insert_admin"  on testimonials for insert with check (auth.email() = 'konointer@gmail.com');
-create policy "testimonials_update_admin"  on testimonials for update using (auth.email() = 'konointer@gmail.com');
-create policy "testimonials_delete_admin"  on testimonials for delete using (auth.email() = 'konointer@gmail.com');
+create policy "testimonials_insert_admin"  on testimonials for insert with check (public.is_admin());
+create policy "testimonials_update_admin"  on testimonials for update using (public.is_admin());
+create policy "testimonials_delete_admin"  on testimonials for delete using (public.is_admin());
 
 -- Exemples de témoignages (optionnel, à supprimer si vous voulez partir de zéro)
 insert into testimonials (name, text, rating, avatar) values
@@ -40,6 +40,6 @@ create table if not exists newsletter_subscribers (
 
 alter table newsletter_subscribers enable row level security;
 
-create policy "newsletter_select_admin"  on newsletter_subscribers for select using (auth.email() = 'konointer@gmail.com');
+create policy "newsletter_select_admin"  on newsletter_subscribers for select using (public.is_admin());
 create policy "newsletter_insert_public" on newsletter_subscribers for insert with check (true);
-create policy "newsletter_delete_admin"  on newsletter_subscribers for delete using (auth.email() = 'konointer@gmail.com');
+create policy "newsletter_delete_admin"  on newsletter_subscribers for delete using (public.is_admin());

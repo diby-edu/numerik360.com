@@ -5,7 +5,7 @@
 -- À exécuter dans Supabase > SQL Editor (une seule fois).
 -- Idempotent : réexécutable sans risque.
 -- Toutes les vérifications admin utilisent l'email admin déjà en place
--- dans le reste du schéma (auth.email() = 'konointer@gmail.com').
+-- dans le reste du schéma (public.is_admin()).
 -- =====================================================================
 
 begin;
@@ -38,20 +38,20 @@ alter table public.contact_messages  enable row level security;
 create policy "sr_insert_public" on public.service_requests
   for insert to anon, authenticated with check (true);
 create policy "sr_select_admin" on public.service_requests
-  for select to authenticated using (auth.email() = 'konointer@gmail.com');
+  for select to authenticated using (public.is_admin());
 create policy "sr_update_admin" on public.service_requests
-  for update to authenticated using (auth.email() = 'konointer@gmail.com')
-  with check (auth.email() = 'konointer@gmail.com');
+  for update to authenticated using (public.is_admin())
+  with check (public.is_admin());
 create policy "sr_delete_admin" on public.service_requests
-  for delete to authenticated using (auth.email() = 'konointer@gmail.com');
+  for delete to authenticated using (public.is_admin());
 
 -- contact_messages
 create policy "cm_insert_public" on public.contact_messages
   for insert to anon, authenticated with check (true);
 create policy "cm_select_admin" on public.contact_messages
-  for select to authenticated using (auth.email() = 'konointer@gmail.com');
+  for select to authenticated using (public.is_admin());
 create policy "cm_delete_admin" on public.contact_messages
-  for delete to authenticated using (auth.email() = 'konointer@gmail.com');
+  for delete to authenticated using (public.is_admin());
 
 
 -- ---------------------------------------------------------------------
@@ -75,8 +75,8 @@ create policy "attr_select_public" on public.attributes
   for select using (true);
 create policy "attr_write_admin" on public.attributes
   for all to authenticated
-  using (auth.email() = 'konointer@gmail.com')
-  with check (auth.email() = 'konointer@gmail.com');
+  using (public.is_admin())
+  with check (public.is_admin());
 
 
 -- ---------------------------------------------------------------------
@@ -96,7 +96,7 @@ set search_path = public
 as $$
 begin
   if new.is_admin is distinct from old.is_admin
-     and coalesce(auth.email(), '') <> 'konointer@gmail.com' then
+     and not public.is_admin() then
     new.is_admin := old.is_admin;  -- on ignore silencieusement l'escalade
   end if;
   return new;
@@ -207,8 +207,8 @@ drop policy if exists "digital_read_admin" on storage.objects;
 
 create policy "digital_admin_all" on storage.objects
   for all to authenticated
-  using      (bucket_id = 'digital' and auth.email() = 'konointer@gmail.com')
-  with check (bucket_id = 'digital' and auth.email() = 'konointer@gmail.com');
+  using      (bucket_id = 'digital' and public.is_admin())
+  with check (bucket_id = 'digital' and public.is_admin());
 
 commit;
 

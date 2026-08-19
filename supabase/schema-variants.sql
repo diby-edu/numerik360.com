@@ -22,7 +22,7 @@ ALTER TABLE product_variants ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "public read product_variants" ON product_variants;
 CREATE POLICY "public read product_variants" ON product_variants FOR SELECT USING (is_active = true);
 DROP POLICY IF EXISTS "admin manage product_variants" ON product_variants;
-CREATE POLICY "admin manage product_variants" ON product_variants FOR ALL USING (auth.email() = 'konointer@gmail.com');
+CREATE POLICY "admin manage product_variants" ON product_variants FOR ALL USING (public.is_admin());
 
 -- === TABLE CODES / LICENCES ===
 CREATE TABLE IF NOT EXISTS product_codes (
@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS product_codes (
 
 ALTER TABLE product_codes ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "admin manage product_codes" ON product_codes;
-CREATE POLICY "admin manage product_codes" ON product_codes FOR ALL USING (auth.email() = 'konointer@gmail.com');
+CREATE POLICY "admin manage product_codes" ON product_codes FOR ALL USING (public.is_admin());
 
 -- === COLONNES PRODUIT ===
 ALTER TABLE products ADD COLUMN IF NOT EXISTS digital_delivery_type text DEFAULT NULL;
