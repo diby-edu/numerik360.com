@@ -1,4 +1,5 @@
 const express = require('express')
+const fs = require('fs')
 const nodemailer = require('nodemailer')
 const helmet = require('helmet')
 const cors = require('cors')
@@ -525,6 +526,27 @@ app.post('/api/contact', async (req, res) => {
     console.error('contact mail error', e)
     res.status(500).json({ error: e.message })
   }
+})
+
+/* Journalisation des erreurs client (monitoring léger auto-hébergé) */
+app.post('/api/client-error', (req, res) => {
+  try {
+    const b = req.body || {}
+    const entry = JSON.stringify({
+      t: new Date().toISOString(),
+      type: String(b.type || '').slice(0, 40),
+      message: String(b.message || '').slice(0, 500),
+      url: String(b.url || '').slice(0, 300),
+      source: String(b.source || '').slice(0, 200),
+      line: b.line,
+      component: String(b.component || '').slice(0, 800),
+      stack: String(b.stack || '').slice(0, 1200),
+      ua: String(b.ua || '').slice(0, 200),
+      ip: req.headers['x-real-ip'] || req.ip,
+    }) + '\n'
+    fs.appendFile('/root/numerik360-api/client-errors.log', entry, () => {})
+  } catch (e) { /* ne jamais faire échouer le report */ }
+  res.json({ ok: true })
 })
 
 app.listen(3005, () => console.log('API numerik360 port 3005'))
