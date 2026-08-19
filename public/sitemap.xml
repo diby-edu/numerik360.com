@@ -4,8 +4,21 @@
   <url><loc>https://numerik360.com/boutique</loc><changefreq>daily</changefreq><priority>0.9</priority></url>
   <url><loc>https://numerik360.com/contact</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
   <url><loc>https://numerik360.com/a-propos</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
-  <url><loc>https://numerik360.com/connexion</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
-  <url><loc>https://numerik360.com/inscription</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
   <url><loc>https://numerik360.com/confidentialite</loc><changefreq>yearly</changefreq><priority>0.2</priority></url>
   <url><loc>https://numerik360.com/conditions</loc><changefreq>yearly</changefreq><priority>0.2</priority></url>
+  <url><loc>https://numerik360.com/boutique?categorie=marketing-communication</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://numerik360.com/boutique?categorie=developpement-web-mobile</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://numerik360.com/boutique?categorie=import-commerce</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://numerik360.com/boutique?categorie=logiciels-licences</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://numerik360.com/boutique?categorie=formation</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://numerik360.com/produit/1-gestion-des-reseaux-sociaux</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://numerik360.com/produit/communication-digitale-marketing</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://numerik360.com/produit/creation-de-site-web</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://numerik360.com/produit/licence-microsoft-office</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://numerik360.com/produit/licence-adobe-creative</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://numerik360.com/produit/expert-sourcing-alibaba</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://numerik360.com/produit/creation-agent-ia</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://numerik360.com/produit/creation-application-web</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://numerik360.com/produit/licence-windows</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://numerik360.com/produit/import-export-chine-afrique-france</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
 </urlset>

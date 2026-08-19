@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { Helmet } from 'react-helmet-async'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
 import Navbar from '../../components/shop/Navbar'
@@ -75,8 +76,19 @@ export default function ShopPage() {
     setPage(1)
   }
 
+  const pageTitle = selectedCat
+    ? `${selectedCat.name} — Numerik360`
+    : search
+      ? `Recherche « ${search} » — Numerik360`
+      : 'Catalogue — Numerik360'
+
   return (
     <div className="min-h-screen bg-theme-bg">
+      <Helmet>
+        <title>{pageTitle}</title>
+        <meta name="description" content={selectedCat ? `Découvrez nos ${selectedCat.name.toLowerCase()} sur Numerik360.` : 'Parcourez tout le catalogue Numerik360 : services, produits numériques et physiques.'} />
+        <link rel="canonical" href={selectedCat ? `https://numerik360.com/boutique?categorie=${selectedCat.slug}` : 'https://numerik360.com/boutique'} />
+      </Helmet>
       <Navbar />
 
       <div className="max-w-6xl mx-auto px-4 py-8">

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { Helmet } from 'react-helmet-async'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
 import Navbar from '../../components/shop/Navbar'
@@ -168,6 +169,11 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-theme-bg">
+      <Helmet>
+        <title>Numerik360 — Boutique digitale en Afrique</title>
+        <meta name="description" content="Services informatiques, produits numériques et physiques livrés rapidement en Afrique. Sites web, licences, formations, sourcing et plus." />
+        <link rel="canonical" href="https://numerik360.com/" />
+      </Helmet>
       <Navbar />
       <HeroSection />
 
