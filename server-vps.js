@@ -86,9 +86,10 @@ async function getUserFromToken(req) {
 }
 
 async function requireAdmin(req, res) {
+  // Source unique de vérité : le drapeau profiles.is_admin (voir la fonction
+  // SQL is_admin(), seul endroit où subsiste l'email admin comme filet).
   const user = await getUserFromToken(req)
-  if (!user?.email) { res.status(401).json({ error: 'Authentification requise' }); return null }
-  if (user.email === 'konointer@gmail.com') return user
+  if (!user?.id) { res.status(401).json({ error: 'Authentification requise' }); return null }
   const rows = await sbQuery('GET', `profiles?id=eq.${encodeURIComponent(user.id)}&select=is_admin`)
   if (rows?.[0]?.is_admin === true) return user
   res.status(403).json({ error: 'Accès réservé à l\'administrateur' })
