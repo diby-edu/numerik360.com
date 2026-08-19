@@ -96,6 +96,38 @@ export default function ProductPage() {
     return () => { document.title = 'Boutique'; metaDesc.content = '' }
   }, [product])
 
+  // Données structurées produit (JSON-LD) — aide Google / Google Shopping
+  useEffect(() => {
+    if (!product) return
+    const price = (product.promo_price && product.promo_price < product.price) ? product.promo_price : product.price
+    const images = (product.images ?? []).map(p => supabase.storage.from('products').getPublicUrl(p).data.publicUrl)
+    const plainDesc = (product.seo_description || product.description || '')
+      .replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 300)
+    const data = {
+      '@context': 'https://schema.org',
+      '@type': 'Product',
+      name: product.name,
+      ...(images.length ? { image: images } : {}),
+      ...(plainDesc ? { description: plainDesc } : {}),
+      offers: {
+        '@type': 'Offer',
+        price: Number(price) || 0,
+        priceCurrency: 'XOF',
+        availability: (product.stock ?? 999) > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+        url: `https://numerik360.com/produit/${product.slug}`,
+      },
+    }
+    let el = document.getElementById('ld-product')
+    if (!el) {
+      el = document.createElement('script')
+      el.type = 'application/ld+json'
+      el.id = 'ld-product'
+      document.head.appendChild(el)
+    }
+    el.textContent = JSON.stringify(data)
+    return () => { el?.remove() }
+  }, [product])
+
   // Variante physique active (depuis attributs sélectionnés)
   const isPhysicalWithVariants = product?.product_type === 'physical' && variants.length > 0
   const attributeGroups = isPhysicalWithVariants
