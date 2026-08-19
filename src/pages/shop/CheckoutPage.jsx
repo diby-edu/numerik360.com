@@ -259,13 +259,13 @@ export default function CheckoutPage() {
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Nom complet *</label>
-                    <input type="text" name="name" value={form.name} onChange={handleChange} required
+                    <input type="text" name="name" aria-label="Nom complet" value={form.name} onChange={handleChange} required
                       className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                       placeholder="Votre nom" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Téléphone *</label>
-                    <input type="tel" name="phone" value={form.phone} onChange={handleChange} required
+                    <input type="tel" name="phone" aria-label="Téléphone" value={form.phone} onChange={handleChange} required
                       className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                       placeholder="+221 77 000 00 00" />
                   </div>
@@ -275,7 +275,7 @@ export default function CheckoutPage() {
                     Email
                     <span className="text-gray-400 font-normal ml-1">(pour recevoir la confirmation)</span>
                   </label>
-                  <input type="email" name="email" value={form.email} onChange={handleChange}
+                  <input type="email" name="email" aria-label="Email" value={form.email} onChange={handleChange}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                     placeholder="votre@email.com" />
                 </div>

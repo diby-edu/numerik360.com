@@ -165,6 +165,7 @@ export default function ContactPage() {
                   <input
                     type="text"
                     name="name"
+                    aria-label="Votre nom"
                     value={form.name}
                     onChange={handleChange}
                     required
@@ -177,6 +178,7 @@ export default function ContactPage() {
                   <input
                     type="email"
                     name="email"
+                    aria-label="Votre email"
                     value={form.email}
                     onChange={handleChange}
                     required
@@ -190,6 +192,7 @@ export default function ContactPage() {
                 <input
                   type="text"
                   name="subject"
+                  aria-label="Sujet"
                   value={form.subject}
                   onChange={handleChange}
                   placeholder="Objet de votre message"
@@ -200,6 +203,7 @@ export default function ContactPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Message *</label>
                 <textarea
                   name="message"
+                  aria-label="Votre message"
                   value={form.message}
                   onChange={handleChange}
                   required

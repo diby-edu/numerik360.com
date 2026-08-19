@@ -48,6 +48,7 @@ export default function LoginPage() {
               <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
               <input
                 type="email"
+                aria-label="Email"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 required
@@ -60,6 +61,7 @@ export default function LoginPage() {
               <label className="block text-sm font-medium text-gray-700 mb-1">Mot de passe</label>
               <input
                 type="password"
+                aria-label="Mot de passe"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 required

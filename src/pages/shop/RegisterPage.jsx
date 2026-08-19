@@ -64,6 +64,7 @@ export default function RegisterPage() {
               <input
                 type="text"
                 name="full_name"
+                aria-label="Nom complet"
                 value={form.full_name}
                 onChange={handleChange}
                 required
@@ -77,6 +78,7 @@ export default function RegisterPage() {
               <input
                 type="tel"
                 name="phone"
+                aria-label="Téléphone"
                 value={form.phone}
                 onChange={handleChange}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
@@ -88,6 +90,7 @@ export default function RegisterPage() {
               <input
                 type="email"
                 name="email"
+                aria-label="Email"
                 value={form.email}
                 onChange={handleChange}
                 required
@@ -100,6 +103,7 @@ export default function RegisterPage() {
               <input
                 type="password"
                 name="password"
+                aria-label="Mot de passe"
                 value={form.password}
                 onChange={handleChange}
                 required
@@ -112,6 +116,7 @@ export default function RegisterPage() {
               <input
                 type="password"
                 name="confirm"
+                aria-label="Confirmer le mot de passe"
                 value={form.confirm}
                 onChange={handleChange}
                 required

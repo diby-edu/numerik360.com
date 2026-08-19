@@ -187,6 +187,7 @@ export default function ServiceRequestPage() {
                   <label className="text-xs font-semibold text-gray-600 mb-1 block">Nom complet *</label>
                   <input
                     type="text"
+                    aria-label="Nom complet"
                     value={form.customer_name}
                     onChange={e => set('customer_name', e.target.value)}
                     placeholder="Votre nom"
@@ -198,6 +199,7 @@ export default function ServiceRequestPage() {
                   <label className="text-xs font-semibold text-gray-600 mb-1 block">Téléphone *</label>
                   <input
                     type="tel"
+                    aria-label="Téléphone"
                     value={form.customer_phone}
                     onChange={e => set('customer_phone', e.target.value)}
                     placeholder="+221 77 000 00 00"
@@ -213,6 +215,7 @@ export default function ServiceRequestPage() {
                 </label>
                 <input
                   type="email"
+                  aria-label="Email"
                   value={form.customer_email}
                   onChange={e => set('customer_email', e.target.value)}
                   placeholder="votre@email.com"
@@ -227,6 +230,7 @@ export default function ServiceRequestPage() {
                 </label>
                 <textarea
                   rows={4}
+                  aria-label="Décrivez votre activité et vos objectifs"
                   value={form.customer_brief}
                   onChange={e => set('customer_brief', e.target.value)}
                   placeholder="Ex : J'ai une boutique de vêtements à Dakar. J'ai 800 abonnés sur Instagram mais peu de ventes en ligne. Je veux développer ma présence sur TikTok..."
