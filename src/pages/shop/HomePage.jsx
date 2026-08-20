@@ -312,6 +312,22 @@ export default function HomePage() {
       </section>
 
       {/* ══════════════════════════════════════
+          NOS PRODUITS (juste après les expertises)
+      ══════════════════════════════════════ */}
+      <section className="max-w-7xl mx-auto px-4 py-14">
+        <div className="mb-8">
+          <p className="text-primary text-xs font-bold uppercase tracking-widest mb-1">Catalogue complet</p>
+          <h2 className="text-2xl font-black text-gray-900">Nos produits & services</h2>
+        </div>
+
+        <div className="space-y-12">
+          {productsByCategory.map(({ cat, products }) => (
+            <CategoryRow key={cat.id} cat={cat} products={products} />
+          ))}
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════
           COMMENT ÇA MARCHE
       ══════════════════════════════════════ */}
       <section className="bg-gray-950 py-20 px-4">
@@ -380,22 +396,6 @@ export default function HomePage() {
           </div>
         </section>
       )}
-
-      {/* ══════════════════════════════════════
-          TOUS NOS PRODUITS
-      ══════════════════════════════════════ */}
-      <section className="max-w-7xl mx-auto px-4 py-14">
-        <div className="mb-8">
-          <p className="text-primary text-xs font-bold uppercase tracking-widest mb-1">Catalogue complet</p>
-          <h2 className="text-2xl font-black text-gray-900">Nos produits & services</h2>
-        </div>
-
-        <div className="space-y-12">
-          {productsByCategory.map(({ cat, products }) => (
-            <CategoryRow key={cat.id} cat={cat} products={products} />
-          ))}
-        </div>
-      </section>
 
       {/* ══════════════════════════════════════
           STATS BAND

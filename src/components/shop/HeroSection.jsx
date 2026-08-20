@@ -54,7 +54,7 @@ function AnimationHero({ title, subtitle }) {
   })), [])
 
   return (
-    <section className="relative overflow-hidden text-white min-h-[620px] flex items-center">
+    <section className="relative overflow-hidden text-white min-h-[440px] flex items-center">
       {/* Fond gradient multi-couleurs animé */}
       <div className="absolute inset-0" style={{
         background: 'linear-gradient(-45deg, #0f172a, #1e3a8a, #1d4ed8, #0ea5e9, #6366f1, #1e3a8a)',
@@ -114,18 +114,18 @@ function AnimationHero({ title, subtitle }) {
       }} />
 
       {/* Contenu */}
-      <div className="max-w-6xl mx-auto px-4 py-20 text-center relative z-10 w-full">
+      <div className="max-w-6xl mx-auto px-4 py-8 text-center relative z-10 w-full">
 
         {/* Badge animé */}
         <div style={{ animation: 'fadeUp 0.6s ease forwards', opacity: 0 }}
-          className="inline-flex items-center gap-2 mb-6 px-5 py-2 rounded-full border border-white/20 bg-white/10 backdrop-blur-md text-sm font-semibold">
+          className="inline-flex items-center gap-2 mb-5 px-5 py-2 rounded-full border border-white/20 bg-white/10 backdrop-blur-md text-sm font-semibold">
           <span style={{ animation: 'flash-in 2s ease-in-out infinite' }}>✦</span>
           Votre partenaire digital — Afrique &amp; France
           <span style={{ animation: 'flash-in 2s ease-in-out 1s infinite' }}>✦</span>
         </div>
 
         {/* Titre avec effet shimmer */}
-        <h1 className="text-5xl md:text-7xl font-black mb-6 leading-tight tracking-tight"
+        <h1 className="text-4xl md:text-5xl font-black mb-3 leading-tight tracking-tight"
           style={{ animation: 'fadeUp 0.8s ease 0.15s forwards', opacity: 0 }}>
           <span style={{
             background: 'linear-gradient(90deg, #ffffff 0%, #bfdbfe 30%, #ffffff 50%, #c7d2fe 70%, #ffffff 100%)',
@@ -140,7 +140,7 @@ function AnimationHero({ title, subtitle }) {
         </h1>
 
         {/* Sous-titre */}
-        <p className="text-lg md:text-xl mb-12 max-w-2xl mx-auto leading-relaxed text-white/75"
+        <p className="text-base md:text-lg mb-6 max-w-2xl mx-auto leading-relaxed text-white/75"
           style={{ animation: 'fadeUp 0.8s ease 0.3s forwards', opacity: 0 }}>
           {subtitle}
         </p>
