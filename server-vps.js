@@ -16,9 +16,12 @@ app.use(express.json())
 const webhookLimiter = rateLimit({ windowMs: 60 * 1000, max: 60, standardHeaders: true, legacyHeaders: false })
 app.use('/api/paydunya-webhook', webhookLimiter)
 
+// Limite plus haute car en Afrique de nombreux clients mobiles partagent une
+// même IP publique (NAT opérateur) : un plafond trop bas bloquerait de vrais
+// utilisateurs. Le webhook PayDunya est exclu (voir OPS-20).
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 50,
+  max: 300,
   standardHeaders: true,
   legacyHeaders: false,
   skip: (req) => req.originalUrl.startsWith('/api/paydunya-webhook'),

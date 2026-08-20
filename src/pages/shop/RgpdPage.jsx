@@ -15,10 +15,10 @@ export default function RgpdPage() {
 
         <div className="bg-white rounded-2xl border border-gray-200 p-8 prose prose-gray max-w-none">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Protection des données personnelles</h1>
-          <p className="text-sm text-gray-400 mb-8">Dernière mise à jour : juin 2025</p>
+          <p className="text-sm text-gray-400 mb-8">Dernière mise à jour : août 2026</p>
 
           <h2>1. Responsable du traitement</h2>
-          <p>Le responsable du traitement des données personnelles collectées sur ce site est l'exploitant de la boutique. Pour toute demande, utilisez notre <Link to="/contact" className="text-primary hover:underline">formulaire de contact</Link>.</p>
+          <p>Le responsable du traitement des données personnelles collectées sur ce site est <strong>Numerik360</strong> (contact : <a href="mailto:support@numerik360.com" className="text-primary hover:underline">support@numerik360.com</a>). Pour toute demande, utilisez notre <Link to="/contact" className="text-primary hover:underline">formulaire de contact</Link>.</p>
 
           <h2>2. Données collectées</h2>
           <p>Nous collectons uniquement les données nécessaires au bon fonctionnement de nos services :</p>
@@ -55,7 +55,7 @@ export default function RgpdPage() {
           <p>Nous mettons en œuvre des mesures techniques et organisationnelles appropriées pour protéger vos données contre tout accès non autorisé, perte ou divulgation.</p>
 
           <h2>7. Transferts de données</h2>
-          <p>Vos données sont hébergées sur des serveurs sécurisés. Elles peuvent être transmises à nos prestataires de paiement uniquement dans le cadre du traitement de vos transactions.</p>
+          <p>Vos données sont hébergées sur des serveurs sécurisés (Supabase). Elles peuvent être transmises à notre prestataire de paiement PayDunya uniquement dans le cadre du traitement de vos transactions.</p>
         </div>
       </div>
       <Footer />

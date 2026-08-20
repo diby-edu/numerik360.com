@@ -15,7 +15,9 @@ export default function PrivacyPage() {
 
         <div className="bg-white rounded-2xl border border-gray-200 p-8 prose prose-gray max-w-none">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Politique de confidentialité</h1>
-          <p className="text-sm text-gray-400 mb-8">Dernière mise à jour : juin 2025</p>
+          <p className="text-sm text-gray-400 mb-8">Dernière mise à jour : août 2026</p>
+
+          <p>Le responsable du traitement de vos données est <strong>Numerik360</strong> (contact : <a href="mailto:support@numerik360.com" className="text-primary hover:underline">support@numerik360.com</a>). La présente politique explique quelles données nous collectons et comment nous les protégeons.</p>
 
           <h2>1. Collecte des données</h2>
           <p>Nous collectons les informations que vous nous fournissez directement lors de votre inscription, de vos commandes ou de vos demandes de service : nom, adresse email, numéro de téléphone et adresse de livraison.</p>
@@ -30,7 +32,7 @@ export default function PrivacyPage() {
           </ul>
 
           <h2>3. Partage des données</h2>
-          <p>Nous ne vendons ni ne louons vos données personnelles à des tiers. Elles peuvent être partagées uniquement avec nos prestataires de paiement (Wave, Orange Money) dans le cadre du traitement de vos transactions.</p>
+          <p>Nous ne vendons ni ne louons vos données personnelles à des tiers. Elles peuvent être partagées uniquement avec notre prestataire de paiement <strong>PayDunya</strong> (qui traite les paiements Wave, Orange Money et carte bancaire) et notre hébergeur technique, dans le cadre strict du traitement de vos commandes.</p>
 
           <h2>4. Sécurité</h2>
           <p>Vos données sont stockées de manière sécurisée via Supabase. Les paiements en ligne sont traités par des prestataires certifiés et nous ne stockons jamais vos informations bancaires.</p>
