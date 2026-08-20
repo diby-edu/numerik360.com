@@ -164,22 +164,6 @@ function AnimationHero({ title, subtitle }) {
           </Link>
         </div>
 
-        {/* Stats inline dans le hero */}
-        <div className="flex flex-wrap justify-center gap-8 sm:gap-16 mt-16 pt-12 border-t border-white/10"
-          style={{ animation: 'fadeUp 0.8s ease 0.6s forwards', opacity: 0 }}>
-          {[
-            { num: '10+', label: 'Services & produits' },
-            { num: '3',   label: 'Pays couverts' },
-            { num: '24h', label: 'Livraison numérique' },
-            { num: '100%', label: 'Satisfaction garantie' },
-          ].map((s, i) => (
-            <div key={i} className="text-center">
-              <p className="text-3xl font-black text-white"
-                style={{ textShadow: '0 0 20px rgba(255,255,255,0.4)' }}>{s.num}</p>
-              <p className="text-white/50 text-xs mt-1 uppercase tracking-wider">{s.label}</p>
-            </div>
-          ))}
-        </div>
       </div>
 
       {/* Vagues basses */}

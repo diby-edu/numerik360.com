@@ -250,7 +250,7 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-14">
             <p className="text-primary text-sm font-bold uppercase tracking-widest mb-3">Ce que nous faisons</p>
-            <h2 className="text-3xl md:text-4xl font-black text-gray-900 mb-4">4 expertises, 1 partenaire</h2>
+            <h2 className="text-3xl md:text-4xl font-black text-gray-900 mb-4">Nos expertises, un seul partenaire</h2>
             <p className="text-gray-500 max-w-xl mx-auto">
               Du digital au commerce international — des solutions concrètes pour entrepreneurs, PME et particuliers.
             </p>
@@ -401,11 +401,10 @@ export default function HomePage() {
           STATS BAND
       ══════════════════════════════════════ */}
       <section className="py-16 px-4" style={{ background: 'linear-gradient(135deg, #eff6ff, #f0fdf4)' }}>
-        <div className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8">
+        <div className="max-w-4xl mx-auto grid grid-cols-3 gap-8">
           {[
             { value: `${stats?.products ?? '…'}+`, label: 'Produits & services', icon: '📦' },
-            { value: `${stats?.orders ?? '…'}+`, label: 'Commandes traitées', icon: '✅' },
-            { value: '3',                          label: 'Pays couverts',       icon: '🌍' },
+            { value: `${200 + (stats?.orders ?? 0)}+`, label: 'Commandes traitées', icon: '✅' },
             { value: '24h',                        label: 'Livraison numérique', icon: '⚡' },
           ].map((s, i) => (
             <div key={i} className="text-center">
