@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import { useQuery, useMutation } from '@tanstack/react-query'
@@ -98,6 +98,66 @@ const STEPS = [
     color: '#059669',
   },
 ]
+
+// Rangée produits d'une catégorie : carrousel piloté par des flèches ‹ ›
+// (barre de défilement masquée ; swipe tactile naturel sur mobile).
+function CategoryRow({ cat, products }) {
+  const trackRef = useRef(null)
+  const slide = (dir) => {
+    const el = trackRef.current
+    if (el) el.scrollBy({ left: dir * el.clientWidth * 0.85, behavior: 'smooth' })
+  }
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-4 gap-3">
+        <h3 className="text-lg font-bold text-gray-900">{cat.name}</h3>
+        <Link to={`/boutique?categorie=${cat.slug}`} className="text-primary text-sm font-semibold hover:underline flex items-center gap-1 shrink-0 whitespace-nowrap">
+          Afficher tout
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+        </Link>
+      </div>
+
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => slide(-1)}
+          aria-label="Produits précédents"
+          className="hidden md:flex absolute left-1 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white border border-gray-200 shadow-md items-center justify-center text-gray-700 hover:text-primary hover:border-primary transition-colors"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+        </button>
+
+        <div
+          ref={trackRef}
+          className="flex gap-4 overflow-x-auto scroll-smooth pb-2 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+        >
+          {products.slice(0, 10).map(p => (
+            <div key={p.id} className="shrink-0 w-40 sm:w-48 lg:w-56">
+              <ProductCard product={p} />
+            </div>
+          ))}
+          <Link
+            to={`/boutique?categorie=${cat.slug}`}
+            className="shrink-0 w-40 sm:w-48 lg:w-56 rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center gap-2 text-gray-500 hover:border-primary hover:text-primary hover:bg-blue-50/50 transition-colors"
+          >
+            <svg className="w-9 h-9" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
+            <span className="text-sm font-bold">Afficher tout</span>
+            <span className="text-xs text-gray-400">{products.length} article{products.length > 1 ? 's' : ''}</span>
+          </Link>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => slide(1)}
+          aria-label="Produits suivants"
+          className="hidden md:flex absolute right-1 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white border border-gray-200 shadow-md items-center justify-center text-gray-700 hover:text-primary hover:border-primary transition-colors"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+        </button>
+      </div>
+    </div>
+  )
+}
 
 export default function HomePage() {
   const [email, setEmail] = useState('')
@@ -332,31 +392,7 @@ export default function HomePage() {
 
         <div className="space-y-12">
           {productsByCategory.map(({ cat, products }) => (
-            <div key={cat.id}>
-              <div className="flex items-center justify-between mb-4 gap-3">
-                <h3 className="text-lg font-bold text-gray-900">{cat.name}</h3>
-                <Link to={`/boutique?categorie=${cat.slug}`} className="text-primary text-sm font-semibold hover:underline flex items-center gap-1 shrink-0 whitespace-nowrap">
-                  Afficher tout
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-                </Link>
-              </div>
-
-              <div className="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4 snap-x scroll-smooth">
-                {products.slice(0, 10).map(p => (
-                  <div key={p.id} className="snap-start shrink-0 w-40 sm:w-48 lg:w-56">
-                    <ProductCard product={p} />
-                  </div>
-                ))}
-                <Link
-                  to={`/boutique?categorie=${cat.slug}`}
-                  className="snap-start shrink-0 w-40 sm:w-48 lg:w-56 rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center gap-2 text-gray-500 hover:border-primary hover:text-primary hover:bg-blue-50/50 transition-colors"
-                >
-                  <svg className="w-9 h-9" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
-                  <span className="text-sm font-bold">Afficher tout</span>
-                  <span className="text-xs text-gray-400">{products.length} article{products.length > 1 ? 's' : ''}</span>
-                </Link>
-              </div>
-            </div>
+            <CategoryRow key={cat.id} cat={cat} products={products} />
           ))}
         </div>
       </section>
