@@ -334,7 +334,7 @@ export default function HeroSection() {
 
   const mode     = settings.hero_mode     ?? 'animation'
   const title    = settings.hero_title    ?? 'Bienvenue sur notre boutique'
-  const subtitle = settings.hero_subtitle ?? 'Découvrez notre sélection de produits de qualité, livrés directement chez vous.'
+  const subtitle = settings.hero_subtitle ?? 'Sites web, licences logicielles, formations et services pro — livrés par email et démarrés sous 24h.'
   const videoUrl = settings.hero_video_url ?? ''
 
   let slides = []
