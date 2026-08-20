@@ -15,11 +15,11 @@ function formatPrice(amount) {
 
 const PAGE_SIZE = 10
 
-/* ── Univers métiers ── */
-const UNIVERS = [
-  {
-    slug: 'developpement-web-mobile',
-    label: 'Développement & IA',
+/* ── Design des univers métiers (indexé par slug de catégorie) ──
+   Le titre affiché vient de la vraie catégorie (BDD) : les cartes se
+   génèrent dynamiquement, donc toute nouvelle catégorie apparaît ici. */
+const UNIVERS_DESIGN = {
+  'developpement-web-mobile': {
     desc: 'Sites web, applications sur mesure et agents IA intelligents pour automatiser votre business.',
     gradient: 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 50%, #3b82f6 100%)',
     icon: (
@@ -28,12 +28,36 @@ const UNIVERS = [
           d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
       </svg>
     ),
-    services: ['Création de site web', "Application sur mesure", "Agent IA personnalisé"],
+    services: ['Création de site web', 'Application sur mesure', 'Agent IA personnalisé'],
     accent: '#93c5fd',
   },
-  {
-    slug: 'logiciels-licences',
-    label: 'Logiciels & Licences',
+  'formation': {
+    desc: 'Formations et coaching pour monter en compétences : bureautique, marketing et création de sites.',
+    gradient: 'linear-gradient(135deg, #9d174d 0%, #db2777 50%, #ec4899 100%)',
+    icon: (
+      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
+          d="M12 14l9-5-9-5-9 5 9 5z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
+          d="M12 14l6.16-3.42a12 12 0 01.66 6.48A12 12 0 0012 20.05a12 12 0 00-6.82-3 12 12 0 01.66-6.47L12 14zM12 14v6" />
+      </svg>
+    ),
+    services: ['Bureautique Word & Excel', 'Marketing digital', 'Création de site WordPress'],
+    accent: '#f9a8d4',
+  },
+  'import-commerce': {
+    desc: 'Sourcing Alibaba et import-export international. Vos marchandises, sans frontières.',
+    gradient: 'linear-gradient(135deg, #92400e 0%, #d97706 50%, #f59e0b 100%)',
+    icon: (
+      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
+          d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    ),
+    services: ['Sourcing Alibaba', 'Import-export international', 'Logistique & dédouanement'],
+    accent: '#fcd34d',
+  },
+  'logiciels-licences': {
     desc: 'Licences Windows, Office, Adobe Creative Cloud livrées par email en moins de 24h.',
     gradient: 'linear-gradient(135deg, #4c1d95 0%, #7c3aed 50%, #8b5cf6 100%)',
     icon: (
@@ -45,24 +69,8 @@ const UNIVERS = [
     services: ['Windows 10/11', 'Microsoft Office', 'Adobe Creative Cloud'],
     accent: '#c4b5fd',
   },
-  {
-    slug: 'import-commerce',
-    label: 'Import & Commerce',
-    desc: 'Sourcing Alibaba, import-export Chine–Afrique–France. Vos marchandises, sans frontières.',
-    gradient: 'linear-gradient(135deg, #92400e 0%, #d97706 50%, #f59e0b 100%)',
-    icon: (
-      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
-          d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-    ),
-    services: ['Sourcing Alibaba', 'Import Chine–Afrique', 'Logistique & dédouanement'],
-    accent: '#fcd34d',
-  },
-  {
-    slug: 'marketing-communication',
-    label: 'Marketing Digital',
-    desc: 'Réseaux sociaux, campagnes publicitaires, communication digitale pour booster votre visibilité.',
+  'marketing-communication': {
+    desc: 'Réseaux sociaux, campagnes publicitaires et communication digitale pour booster votre visibilité.',
     gradient: 'linear-gradient(135deg, #064e3b 0%, #059669 50%, #10b981 100%)',
     icon: (
       <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -75,14 +83,28 @@ const UNIVERS = [
     services: ['Gestion réseaux sociaux', 'Publicité Facebook/Instagram', 'Stratégie digitale'],
     accent: '#6ee7b7',
   },
-]
+}
+
+/* Design neutre pour toute catégorie sans design dédié (future catégorie) */
+const DEFAULT_UNIVERS = {
+  desc: 'Découvrez toutes nos offres dans cette catégorie.',
+  gradient: 'linear-gradient(135deg, #334155 0%, #475569 50%, #64748b 100%)',
+  icon: (
+    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
+        d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+    </svg>
+  ),
+  services: [],
+  accent: '#cbd5e1',
+}
 
 /* ── Étapes "Comment ça marche" ── */
 const STEPS = [
   {
     num: '01',
     title: 'Choisissez votre offre',
-    desc: 'Parcourez nos services, logiciels et produits. Chaque offre dispose de formules adaptées à votre budget.',
+    desc: 'Parcourez nos services, logiciels et formations. Chaque offre affiche un prix clair, avec des options quand c\'est pertinent.',
     color: '#2563eb',
   },
   {
@@ -236,8 +258,8 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-theme-bg">
       <Helmet>
-        <title>Numerik360 — Boutique digitale en Afrique</title>
-        <meta name="description" content="Services informatiques, produits numériques et physiques livrés rapidement en Afrique. Sites web, licences, formations, sourcing et plus." />
+        <title>Numerik360 — Boutique digitale</title>
+        <meta name="description" content="Services informatiques et produits numériques livrés rapidement, où que vous soyez. Sites web, licences logicielles, formations, sourcing et plus." />
         <link rel="canonical" href="https://numerik360.com/" />
       </Helmet>
       <Navbar />
@@ -257,8 +279,10 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {UNIVERS.map((u) => (
-              <Link key={u.slug} to={`/boutique?categorie=${u.slug}`}
+            {homeCategories.map((cat) => {
+              const u = UNIVERS_DESIGN[cat.slug] ?? DEFAULT_UNIVERS
+              return (
+              <Link key={cat.id} to={`/boutique?categorie=${cat.slug}`}
                 className="group relative rounded-2xl overflow-hidden flex flex-col min-h-[320px] hover:scale-[1.02] transition-transform duration-300 cursor-pointer">
 
                 {/* Fond gradient */}
@@ -283,7 +307,7 @@ export default function HomePage() {
                   </div>
 
                   {/* Titre */}
-                  <h3 className="text-white font-black text-xl mb-2">{u.label}</h3>
+                  <h3 className="text-white font-black text-xl mb-2">{cat.name}</h3>
                   <p className="text-white/75 text-sm leading-relaxed mb-5">{u.desc}</p>
 
                   {/* Liste services */}
@@ -306,7 +330,8 @@ export default function HomePage() {
                   </div>
                 </div>
               </Link>
-            ))}
+              )
+            })}
           </div>
         </div>
       </section>

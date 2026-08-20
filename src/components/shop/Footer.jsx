@@ -26,7 +26,7 @@ export default function Footer() {
           <div>
             <h3 className="text-white font-bold text-lg mb-4">{s.shop_name || 'Boutique'}</h3>
             <p className="text-sm text-gray-400 leading-relaxed mb-4">
-              Votre destination shopping en ligne. Produits de qualité, livrés chez vous.
+              Votre partenaire digital : logiciels, services web, formations et import. Livraison numérique rapide.
             </p>
             {/* Réseaux sociaux */}
             <div className="flex gap-3">
@@ -130,7 +130,7 @@ export default function Footer() {
           <div className="flex gap-4">
             <span>Paiement sécurisé</span>
             <span>•</span>
-            <span>Livraison rapide</span>
+            <span>Livraison numérique</span>
             <span>•</span>
             <span>Support client</span>
           </div>

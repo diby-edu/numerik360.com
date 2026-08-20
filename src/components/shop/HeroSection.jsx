@@ -120,7 +120,7 @@ function AnimationHero({ title, subtitle }) {
         <div style={{ animation: 'fadeUp 0.6s ease forwards', opacity: 0 }}
           className="inline-flex items-center gap-2 mb-5 px-5 py-2 rounded-full border border-white/20 bg-white/10 backdrop-blur-md text-sm font-semibold">
           <span style={{ animation: 'flash-in 2s ease-in-out infinite' }}>✦</span>
-          Votre partenaire digital — Afrique &amp; France
+          Sites web · Licences · Import · Marketing
           <span style={{ animation: 'flash-in 2s ease-in-out 1s infinite' }}>✦</span>
         </div>
 
