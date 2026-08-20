@@ -441,6 +441,30 @@ export default function ProductPage() {
               </div>
             )}
 
+            {/* ── SERVICE SANS FORMULE : CTA vers la demande de devis ── */}
+            {product.product_type === 'service' && variants.length === 0 && (
+              <div className="mb-5">
+                <div className="rounded-xl border-2 border-blue-100 overflow-hidden">
+                  <div className="px-4 py-4" style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%)' }}>
+                    <div className="flex items-center justify-between gap-3 mb-3">
+                      <p className="text-xl font-black text-blue-700 whitespace-nowrap">{formatPrice(activePrice)}</p>
+                      <span className="text-xs text-gray-400 text-right">Sans paiement<br/>maintenant</span>
+                    </div>
+                    <Link
+                      to={`/demande-service/${product.slug}`}
+                      className="w-full py-3 rounded-xl font-bold text-sm text-white transition-all shadow-md hover:opacity-90 flex items-center justify-center gap-2"
+                      style={{ background: 'linear-gradient(135deg, #2563eb, #1d4ed8)' }}
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                      </svg>
+                      Je suis intéressé
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* ── SÉLECTEUR PHYSIQUE ── */}
             {isPhysicalWithVariants && (
               <div className="mb-5 space-y-4">

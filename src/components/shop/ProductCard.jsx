@@ -123,7 +123,9 @@ export default function ProductCard({ product }) {
             to={`/produit/${product.slug}`}
             className="mt-auto w-full bg-primary text-white py-2 rounded-lg text-sm font-medium hover:bg-primary-dark transition-colors flex items-center justify-center gap-2"
           >
-            {product.product_type === 'service' ? 'Voir les formules' : product.product_type === 'digital' ? 'Acheter' : 'Voir les options'}
+            {product.product_type === 'service'
+              ? (product.has_variants ? 'Voir les formules' : 'Je suis intéressé')
+              : product.product_type === 'digital' ? 'Acheter' : 'Voir les options'}
           </Link>
         ) : (
           <button
