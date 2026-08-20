@@ -105,23 +105,27 @@ export default function HomePage() {
   const [subError, setSubError] = useState('')
   const [page, setPage] = useState(1)
 
-  const { data: allProductsData } = useQuery({
-    queryKey: ['products-all', page],
+  const { data: homeCategories = [] } = useQuery({
+    queryKey: ['home-categories'],
     queryFn: async () => {
-      const from = (page - 1) * PAGE_SIZE
-      const to = from + PAGE_SIZE - 1
-      const { data, count } = await supabase
-        .from('products')
-        .select('*', { count: 'exact' })
-        .eq('is_active', true)
-        .order('created_at', { ascending: false })
-        .range(from, to)
-      return { products: data ?? [], total: count ?? 0 }
+      const { data } = await supabase.from('categories').select('id,name,slug').order('name')
+      return data ?? []
+    },
+    staleTime: 300000,
+  })
+
+  const { data: catalogProducts = [] } = useQuery({
+    queryKey: ['home-catalog'],
+    queryFn: async () => {
+      const { data } = await supabase.from('products').select('*').eq('is_active', true).order('created_at', { ascending: false })
+      return data ?? []
     },
   })
 
-  const allProducts = allProductsData?.products ?? []
-  const totalPages = Math.ceil((allProductsData?.total ?? 0) / PAGE_SIZE)
+  // Produits regroupés par catégorie (rangées horizontales sur l'accueil)
+  const productsByCategory = homeCategories
+    .map(cat => ({ cat, products: catalogProducts.filter(p => p.category_id === cat.id) }))
+    .filter(g => g.products.length > 0)
 
   const { data: promoProducts = [] } = useQuery({
     queryKey: ['products-promo'],
@@ -321,43 +325,40 @@ export default function HomePage() {
           TOUS NOS PRODUITS
       ══════════════════════════════════════ */}
       <section className="max-w-7xl mx-auto px-4 py-14">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <p className="text-primary text-xs font-bold uppercase tracking-widest mb-1">Catalogue complet</p>
-            <h2 className="text-2xl font-black text-gray-900">Nos produits & services</h2>
-          </div>
-          <Link to="/boutique" className="text-primary text-sm font-semibold hover:underline flex items-center gap-1">
-            Voir tout
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </Link>
+        <div className="mb-8">
+          <p className="text-primary text-xs font-bold uppercase tracking-widest mb-1">Catalogue complet</p>
+          <h2 className="text-2xl font-black text-gray-900">Nos produits & services</h2>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-          {allProducts.map(p => <ProductCard key={p.id} product={p} />)}
-        </div>
+        <div className="space-y-12">
+          {productsByCategory.map(({ cat, products }) => (
+            <div key={cat.id}>
+              <div className="flex items-center justify-between mb-4 gap-3">
+                <h3 className="text-lg font-bold text-gray-900">{cat.name}</h3>
+                <Link to={`/boutique?categorie=${cat.slug}`} className="text-primary text-sm font-semibold hover:underline flex items-center gap-1 shrink-0 whitespace-nowrap">
+                  Afficher tout
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                </Link>
+              </div>
 
-        {totalPages > 1 && (
-          <div className="flex items-center justify-center gap-2 mt-10">
-            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
-              className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:border-primary hover:text-primary disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
-              ← Précédent
-            </button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map(n => (
-              <button key={n} onClick={() => setPage(n)}
-                className={`w-9 h-9 rounded-lg text-sm font-semibold transition-colors ${
-                  n === page ? 'bg-primary text-white' : 'border border-gray-200 text-gray-600 hover:border-primary hover:text-primary'
-                }`}>
-                {n}
-              </button>
-            ))}
-            <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
-              className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:border-primary hover:text-primary disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
-              Suivant →
-            </button>
-          </div>
-        )}
+              <div className="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4 snap-x scroll-smooth">
+                {products.slice(0, 10).map(p => (
+                  <div key={p.id} className="snap-start shrink-0 w-40 sm:w-48 lg:w-56">
+                    <ProductCard product={p} />
+                  </div>
+                ))}
+                <Link
+                  to={`/boutique?categorie=${cat.slug}`}
+                  className="snap-start shrink-0 w-40 sm:w-48 lg:w-56 rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center gap-2 text-gray-500 hover:border-primary hover:text-primary hover:bg-blue-50/50 transition-colors"
+                >
+                  <svg className="w-9 h-9" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
+                  <span className="text-sm font-bold">Afficher tout</span>
+                  <span className="text-xs text-gray-400">{products.length} article{products.length > 1 ? 's' : ''}</span>
+                </Link>
+              </div>
+            </div>
+          ))}
+        </div>
       </section>
 
       {/* ══════════════════════════════════════
