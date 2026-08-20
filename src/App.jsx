@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { HelmetProvider } from 'react-helmet-async'
 import { supabase } from './lib/supabase'
 import ThemeProvider from './components/ThemeProvider'
+import ScrollToTop from './components/ScrollToTop'
 
 // HomePage chargée immédiatement (above the fold)
 import HomePage from './pages/shop/HomePage'
@@ -93,6 +94,7 @@ export default function App() {
   return (
     <HelmetProvider>
       <BrowserRouter>
+        <ScrollToTop />
         <Suspense fallback={<Spinner />}>
           <Routes>
             <Route element={<ThemeProvider />}>
